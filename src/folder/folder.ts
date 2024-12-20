@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import type { Strings } from "$/common/types";
+import { emptyDir, ensureDir, remove, stat } from "fs-extra";
 import { basename, dirname, resolve } from "pathe";
 
 export class Folder {
@@ -45,6 +46,32 @@ export class Folder {
 			parentName: this.parentName,
 			parentPath: this.#parentPath,
 		};
+	}
+
+	join(folder: string | Folder, ...extraPathPieces: Strings) {
+		const firstPathPiece = folder instanceof Folder ? folder.path : folder;
+		return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
+	}
+
+	async exists() {
+		try {
+			const stats = await stat(this.#path);
+			return stats.isDirectory();
+		} catch (_) {
+			return false;
+		}
+	}
+
+	async ensureExists() {
+		await ensureDir(this.#path);
+	}
+
+	async ensureEmpty() {
+		await emptyDir(this.#path);
+	}
+
+	async delete() {
+		await remove(this.path);
 	}
 }
 
