@@ -1,11 +1,13 @@
 {
-    "name": "PACKAGE_NAME",
+    "name": "fluent-file",
     "version": "0.1.0",
-    "description": "DESCRIBE PACKAGE",
+    "description": "A fluent TypeScript library for working with files and folders",
     "keywords": [
-        "ADD KEYWORDS"
+        "files",
+        "folders",
+        "fluent"
     ],
-    "repository": "github:dannywexler/PACKAGE_NAME",
+    "repository": "github:dannywexler/fluent-file",
     "author": "Danny Wexler",
     "license": "MIT",
     "type": "module",
@@ -22,14 +24,17 @@
         "dist"
     ],
     "dependencies": {
+        "pathe": "^1.1.2",
         "zod": "^3.24.1"
     },
     "devDependencies": {
         "@biomejs/biome": "^1.9.4",
+        "@types/node": "^22.10.2",
         "tsup": "^8.3.5",
         "typescript": "^5.7.2",
         "vite-tsconfig-paths": "^5.1.4",
-        "vitest": "^2.1.8"
+        "vitest": "^2.1.8",
+        "wireit": "^0.14.9"
     },
     "scripts": {
         "build": "wireit",
