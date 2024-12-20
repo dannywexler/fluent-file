@@ -48,7 +48,7 @@ export class Folder {
 		};
 	}
 
-	join(folder: string | Folder, ...extraPathPieces: Strings) {
+	subFolder(folder: string | Folder, ...extraPathPieces: Strings) {
 		const firstPathPiece = folder instanceof Folder ? folder.path : folder;
 		return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
 	}
@@ -71,7 +71,7 @@ export class Folder {
 	}
 
 	async delete() {
-		await remove(this.path);
+		await remove(this.#path);
 	}
 }
 

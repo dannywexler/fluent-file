@@ -1,3 +1,4 @@
+import { file } from "$/file/any";
 import { folder, homeFolder } from "$/folder/folder";
 import { describe, expect, test } from "vitest";
 
@@ -33,11 +34,13 @@ describe("Construction variations", () => {
 		// console.log({ f, ds });
 		expect(f).toEqual(ds);
 	});
+});
 
-	test("join", () => {
+describe("parent - child - parent", () => {
+	test("subFolder with ..", () => {
 		const parent = folder("/tmp");
-		const child = parent.join("sub");
-		const parent2 = child.join("..");
+		const child = parent.subFolder("sub");
+		const parent2 = child.subFolder("..");
 		console.log({
 			parent: parent.toString(),
 			child: child.toString(),
@@ -46,5 +49,19 @@ describe("Construction variations", () => {
 		expect(child.parentPath).toEqual(parent.path);
 		expect(child.parentName).toEqual(parent.name);
 		expect(parent.path).toEqual(parent2.path);
+	});
+
+	test("file from folder", () => {
+		const parentFolder = folder("src");
+		const childFile = file(parentFolder, "main.ts");
+		const parentFolder2 = childFile.parentFolder;
+		console.log({
+			parentFolder: parentFolder.toString(),
+			childFile: childFile.toString(),
+			parentFolder2: parentFolder2.toString(),
+		});
+		expect(childFile.parentName).toEqual(parentFolder.name);
+		expect(childFile.parentPath).toEqual(parentFolder.path);
+		expect(parentFolder.toString()).toEqual(parentFolder2.toString());
 	});
 });
