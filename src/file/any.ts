@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import { NEWLINE_REGEX, readFileText, writeFileText } from "$/common/text";
 import type { Strings } from "$/common/types";
 import { Folder } from "$/folder/folder";
 import { ensureFile, remove, stat } from "fs-extra";
@@ -85,6 +86,18 @@ export class AnyFile {
 
     async delete() {
         await remove(this.#path);
+    }
+
+    readText() {
+        return readFileText(this.path);
+    }
+
+    readTextLines() {
+        return this.readText().map((str) => str.split(NEWLINE_REGEX));
+    }
+
+    writeText(content: string) {
+        return writeFileText(this.path, content);
     }
 }
 

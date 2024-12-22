@@ -6,7 +6,6 @@ import type {
 } from "$/common/types";
 import { zodResult } from "$/common/zod";
 import { AnyFile } from "$/file/any";
-import { readFileText, writeFileText } from "$/file/text.utils";
 import type { Folder } from "$/folder/folder";
 import { fromThrowable } from "neverthrow";
 import parseJson, { type JSONError as JsonParseError } from "parse-json";
@@ -54,7 +53,7 @@ export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
     }
 
     read() {
-        return readFileText(this.path)
+        return this.readText()
             .andThen(this.unknownParser)
             .andThen((unknownContents) =>
                 zodResult(this.fileSchema, unknownContents),
@@ -67,7 +66,7 @@ export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
                 this.unknownStringifier(unknownContents, spacing ?? 2),
             )
             .asyncAndThen((stringifiedContents) =>
-                writeFileText(this.path, stringifiedContents),
+                this.writeText(stringifiedContents),
             );
     }
 }

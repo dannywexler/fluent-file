@@ -1,10 +1,9 @@
 import { homedir } from "node:os";
 import { type AnyGlob, globFolders } from "$/common/glob";
-import type { Strings } from "$/common/types";
-import { emptyDir, ensureDir, remove, stat } from "fs-extra";
-import { basename, dirname, resolve } from "pathe";
-import { ResultAsync } from "neverthrow";
 import { getFolderStats } from "$/common/stats";
+import type { Strings } from "$/common/types";
+import { emptyDir, ensureDir, remove } from "fs-extra";
+import { basename, dirname, resolve } from "pathe";
 
 export class Folder {
     #path: string;
@@ -54,11 +53,11 @@ export class Folder {
     }
 
     getStats() {
-        return getFolderStats(this.#path)
+        return getFolderStats(this.#path);
     }
 
     async exists() {
-        return this.getStats().map(() => true)
+        return this.getStats().map(() => true);
     }
 
     async ensureExists() {

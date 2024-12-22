@@ -8,6 +8,8 @@ import {
 import { readFile, writeFile } from "fs-extra";
 import { ResultAsync } from "neverthrow";
 
+export const NEWLINE_REGEX = /\n|\r|\r\n/;
+
 export function readFileText(path: string) {
     return ResultAsync.fromThrowable(
         () => readFile(path, "utf8"),
