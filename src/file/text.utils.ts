@@ -1,4 +1,4 @@
-import { NodeErrorCode, assertIsNodeError } from "$/common/errors";
+import { NodeErrorCode, assertIsNodeError } from "$/common/node";
 import {
     FileNotFoundError,
     FileReadError,

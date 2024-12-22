@@ -1,13 +1,17 @@
 import { homedir } from "node:os";
+import { type AnyGlob, globFolders } from "$/common/glob";
 import type { Strings } from "$/common/types";
 import { emptyDir, ensureDir, remove, stat } from "fs-extra";
 import { basename, dirname, resolve } from "pathe";
+import { ResultAsync } from "neverthrow";
+import { getFolderStats } from "$/common/stats";
 
 export class Folder {
     #path: string;
     #name: string;
     #parentName: string;
     #parentPath: string;
+    #pathsMapper = (paths: Strings) => paths.map((pth) => folder(pth));
 
     constructor(folder: string | Folder, ...extraPathPieces: Strings) {
         const firstPathPiece = folder instanceof Folder ? folder.path : folder;
@@ -35,11 +39,12 @@ export class Folder {
     get parentPath() {
         return this.#parentPath;
     }
+
     get info() {
         return {
-            path: this.path,
-            name: this.name,
-            parentName: this.parentName,
+            path: this.#path,
+            name: this.#name,
+            parentName: this.#parentName,
             parentPath: this.#parentPath,
         };
     }
@@ -48,21 +53,12 @@ export class Folder {
         return this.#path;
     }
 
-    getParentFolder() {
-        return new Folder(this.#parentPath);
-    }
-    subFolder(folder: string | Folder, ...extraPathPieces: Strings) {
-        const firstPathPiece = folder instanceof Folder ? folder.path : folder;
-        return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
+    getStats() {
+        return getFolderStats(this.#path)
     }
 
     async exists() {
-        try {
-            const stats = await stat(this.#path);
-            return stats.isDirectory();
-        } catch (_) {
-            return false;
-        }
+        return this.getStats().map(() => true)
     }
 
     async ensureExists() {
@@ -75,6 +71,23 @@ export class Folder {
 
     async delete() {
         await remove(this.#path);
+    }
+
+    getParentFolder() {
+        return new Folder(this.#parentPath);
+    }
+
+    subFolder(folder: string | Folder, ...extraPathPieces: Strings) {
+        const firstPathPiece = folder instanceof Folder ? folder.path : folder;
+        return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
+    }
+
+    childFolders(globPattern: AnyGlob) {
+        return globFolders(this.#path, globPattern, 1).map(this.#pathsMapper);
+    }
+
+    findFolders(globPattern: AnyGlob) {
+        return globFolders(this.#path, globPattern).map(this.#pathsMapper);
     }
 }
 
