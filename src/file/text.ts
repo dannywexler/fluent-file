@@ -1,5 +1,5 @@
 import { AnyFile } from "$/file/any";
-import { readFileText, writeFileText } from "./text.utils";
+import { readFileText, writeFileText } from "$/file/text.utils";
 
 const newLineRegex = /\n|\r|\r\n/;
 
@@ -12,7 +12,7 @@ export class TextFile extends AnyFile {
         return readFileText(this.path).map((str) => str.split(newLineRegex));
     }
 
-    async write(content: string) {
-        return await writeFileText(this.path, content);
+    write(content: string) {
+        return writeFileText(this.path, content);
     }
 }

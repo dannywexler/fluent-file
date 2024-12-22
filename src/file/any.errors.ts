@@ -6,37 +6,29 @@ export enum FileError {
 }
 
 export class FileNotFoundError extends Error {
-    case: FileError;
     constructor(path: string, cause: Error) {
-        super(`${FileError.NotFound}: ${path}`, { cause });
+        super(path, { cause });
         this.name = this.constructor.name;
-        this.case = FileError.NotFound;
     }
 }
 
 export class FileReadError extends Error {
-    case: FileError;
     constructor(path: string, cause: Error) {
-        super(`${FileError.Read}: ${path}`, { cause });
+        super(path, { cause });
         this.name = this.constructor.name;
-        this.case = FileError.Read;
     }
 }
 
 export class FileWriteError extends Error {
-    case: FileError;
     constructor(path: string, cause: Error) {
-        super(`${FileError.Write}: ${path}`, { cause });
+        super(path, { cause });
         this.name = this.constructor.name;
-        this.case = FileError.Read;
     }
 }
 
 export class FileWasFolderError extends Error {
-    case: FileError;
     constructor(path: string, cause: Error) {
-        super(`${FileError.WasFolder}: ${path}`, { cause });
+        super(path, { cause });
         this.name = this.constructor.name;
-        this.case = FileError.WasFolder;
     }
 }
