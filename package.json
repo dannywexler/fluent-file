@@ -29,7 +29,10 @@
     "dependencies": {
         "fs-extra": "^11.2.0",
         "neverthrow": "^8.1.1",
+        "parse-json": "^8.1.0",
         "pathe": "^1.1.2",
+        "safe-stable-stringify": "^2.5.0",
+        "yaml": "^2.6.1",
         "zod": "^3.24.1"
     },
     "devDependencies": {

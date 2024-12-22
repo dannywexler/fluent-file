@@ -1,4 +1,9 @@
-import type { Strings } from "$/common/types";
+import type {
+    Spacing,
+    Strings,
+    UnknownParser,
+    UnknownStringifier,
+} from "$/common/types";
 import { zodResult } from "$/common/zod";
 import { AnyFile } from "$/file/any";
 import { readFileText, writeFileText } from "$/file/text.utils";
@@ -9,9 +14,9 @@ import { configure } from "safe-stable-stringify";
 import type { ZodTypeAny, z } from "zod";
 
 const safeJsonParse = fromThrowable(
-    (text: string, fileName: string) => parseJson(text, fileName),
+    (text: string) => parseJson(text),
     (parseErr) => parseErr as JsonParseError,
-);
+) satisfies UnknownParser<JsonParseError>;
 
 const configuredStringify = configure({
     circularValue: Error,
@@ -19,7 +24,7 @@ const configuredStringify = configure({
 });
 
 const safeJsonStringify = fromThrowable(
-    (unknownContents: unknown, space?: string | number) => {
+    (unknownContents: unknown, space: Spacing) => {
         const results = configuredStringify(unknownContents, null, space);
         if (results === undefined) {
             throw new Error("Undefined returned from stringify!!!");
@@ -31,17 +36,13 @@ const safeJsonStringify = fromThrowable(
         return results;
     },
     (stringifyError) => stringifyError as Error,
-);
-
-export class JsonStringifyError extends Error {
-    constructor(path: string, cause: Error) {
-        super(path, { cause });
-        this.name = this.constructor.name;
-    }
-}
+) satisfies UnknownStringifier;
 
 export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
-    #fileSchema: FileSchema;
+    protected readonly fileSchema: FileSchema;
+    protected readonly unknownParser: UnknownParser = safeJsonParse;
+    protected readonly unknownStringifier: UnknownStringifier =
+        safeJsonStringify;
 
     constructor(
         fileSchema: FileSchema,
@@ -49,24 +50,21 @@ export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
         ...extraPathPieces: Strings
     ) {
         super(filePath, ...extraPathPieces);
-        this.#fileSchema = fileSchema;
+        this.fileSchema = fileSchema;
     }
 
     read() {
         return readFileText(this.path)
-            .andThen((text) => safeJsonParse(text, this.fullName))
+            .andThen(this.unknownParser)
             .andThen((unknownContents) =>
-                zodResult(this.#fileSchema, unknownContents),
+                zodResult(this.fileSchema, unknownContents),
             );
     }
 
-    write(contents: z.infer<FileSchema>, space?: string | number) {
-        return zodResult(this.#fileSchema, contents)
+    write(contents: z.infer<FileSchema>, spacing?: string | number) {
+        return zodResult(this.fileSchema, contents)
             .andThen((unknownContents) =>
-                safeJsonStringify(unknownContents, space).mapErr(
-                    (stringifyError) =>
-                        new JsonStringifyError(this.path, stringifyError),
-                ),
+                this.unknownStringifier(unknownContents, spacing ?? 2),
             )
             .asyncAndThen((stringifiedContents) =>
                 writeFileText(this.path, stringifiedContents),
