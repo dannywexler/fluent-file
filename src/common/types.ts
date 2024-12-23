@@ -21,3 +21,5 @@ export type UnknownStringifier<
 ) => Result<string, SomeStringifyError>;
 
 export type Spacing = string | number | undefined;
+
+export type FilePathToClass<T> = (filePath: string) => T;

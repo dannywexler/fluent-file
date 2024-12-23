@@ -1,7 +1,8 @@
+import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Spacing, Strings } from "$/common/types";
 import { zodResult } from "$/common/zod";
 import { AnyFile } from "$/file/any";
-import type { Folder } from "$/folder/folder";
+import { type Folder, folder } from "$/folder/folder";
 import { fromThrowable } from "neverthrow";
 import parseJson, { type JSONError as JsonParseError } from "parse-json";
 import { configure } from "safe-stable-stringify";
@@ -64,4 +65,16 @@ export function jsonFile<FileSchema extends ZodTypeAny>(
     ...extraPathPieces: Strings
 ) {
     return new JsonFile(fileSchema, filePath, ...extraPathPieces);
+}
+
+export function findJsonFiles<FileSchema extends ZodTypeAny>(
+    fileSchema: FileSchema,
+    inFolder: Folder = folder(),
+    anyGlob?: AnyGlob,
+) {
+    return globFiles(
+        (filePath) => jsonFile(fileSchema, filePath),
+        inFolder,
+        anyGlob,
+    );
 }

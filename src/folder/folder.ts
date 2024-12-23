@@ -10,7 +10,6 @@ export class Folder {
     #name: string;
     #parentName: string;
     #parentPath: string;
-    #pathsMapper = (paths: Strings) => paths.map((pth) => folder(pth));
 
     constructor(folder: string | Folder, ...extraPathPieces: Strings) {
         const firstPathPiece = folder instanceof Folder ? folder.path : folder;
@@ -50,7 +49,7 @@ export class Folder {
 
     toString = () => this.#path;
 
-    getStats = () => getFolderStats(this.#path);
+    getStats = () => getFolderStats(this);
 
     exists = () => this.getStats().map(() => true);
 
@@ -67,11 +66,9 @@ export class Folder {
         return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
     };
 
-    childFolders = (globPattern: AnyGlob) =>
-        globFolders(this.#path, globPattern, 1).map(this.#pathsMapper);
+    childFolders = (globPattern: AnyGlob) => globFolders(this, globPattern, 1);
 
-    findFolders = (globPattern: AnyGlob) =>
-        globFolders(this.#path, globPattern).map(this.#pathsMapper);
+    findFolders = (globPattern: AnyGlob) => globFolders(this, globPattern);
 }
 
 export function folder(folder?: string | Folder): Folder;

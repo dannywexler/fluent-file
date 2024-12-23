@@ -1,8 +1,9 @@
 import type { StringifyError } from "$/common/errors";
+import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Spacing, Strings } from "$/common/types";
 import type { AnyFile } from "$/file/any";
 import { JsonFile } from "$/file/json";
-import type { Folder } from "$/folder/folder";
+import { type Folder, folder } from "$/folder/folder";
 import { fromThrowable } from "neverthrow";
 import {
     type CreateNodeOptions,
@@ -65,8 +66,8 @@ export class YamlFile<
             );
 
     override write = (
+        stringifyOptions: YamlStringifyOptions,
         contents: z.infer<FileSchema>,
-        stringifyOptions?: YamlStringifyOptions,
     ) =>
         this.validateUnknown(contents)
             .andThen((unknownContents) =>
@@ -81,4 +82,16 @@ export function yamlFile<FileSchema extends ZodTypeAny>(
     ...extraPathPieces: Strings
 ) {
     return new YamlFile(fileSchema, filePath, ...extraPathPieces);
+}
+
+export function findYamlFiles<FileSchema extends ZodTypeAny>(
+    fileSchema: FileSchema,
+    inFolder: Folder = folder(),
+    anyGlob?: AnyGlob,
+) {
+    return globFiles(
+        (filePath) => yamlFile(fileSchema, filePath),
+        inFolder,
+        anyGlob,
+    );
 }

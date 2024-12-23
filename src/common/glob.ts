@@ -1,5 +1,6 @@
 import { getFolderStats } from "$/common/stats";
-import type { Strings } from "$/common/types";
+import type { FilePathToClass, Strings } from "$/common/types";
+import { type Folder, folder } from "$/folder/folder";
 import { type Options as GlobbyOptions, globby } from "globby";
 
 export type AnyGlob = string | Strings | GlobOptions;
@@ -15,13 +16,14 @@ const staticGlobbyOptions: GlobbyOptions = {
     gitignore: true,
 };
 
-async function globFactory(
-    folder: string,
+async function globFactory<T>(
+    filePathToClass: FilePathToClass<T>,
+    folder: Folder,
     overrides: GlobbyOptions,
     anyGlob: AnyGlob,
 ) {
     let opts: GlobbyOptions = {
-        cwd: folder,
+        cwd: folder.path,
         ...staticGlobbyOptions,
         ...overrides,
     };
@@ -40,25 +42,26 @@ async function globFactory(
             ...opts,
         };
     }
-    return (await globby(mainGlob, opts)).sort();
+    return (await globby(mainGlob, opts)).sort().map(filePathToClass);
 }
 
-export function globFiles(
-    folder: string,
+export function globFiles<T>(
+    filePathToClass: FilePathToClass<T>,
+    folder: Folder,
     anyGlob: AnyGlob = STAR_STAR,
     deep = Number.POSITIVE_INFINITY,
 ) {
     return getFolderStats(folder).map(() =>
-        globFactory(folder, { deep }, anyGlob),
+        globFactory(filePathToClass, folder, { deep }, anyGlob),
     );
 }
 
 export function globFolders(
-    cwd: string,
+    cwd: Folder,
     anyGlob: AnyGlob = STAR_STAR,
     deep = Number.POSITIVE_INFINITY,
 ) {
     return getFolderStats(cwd).map(() =>
-        globFactory(cwd, { onlyDirectories: true, deep }, anyGlob),
+        globFactory(folder, cwd, { onlyDirectories: true, deep }, anyGlob),
     );
 }

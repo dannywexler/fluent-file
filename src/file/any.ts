@@ -1,7 +1,8 @@
 import { homedir } from "node:os";
+import { type AnyGlob, globFiles } from "$/common/glob";
 import { NEWLINE_REGEX, readFileText, writeFileText } from "$/common/text";
 import type { Strings } from "$/common/types";
-import { Folder } from "$/folder/folder";
+import { Folder, folder } from "$/folder/folder";
 import { ensureFile, remove, stat } from "fs-extra";
 import { basename, dirname, resolve } from "pathe";
 
@@ -107,4 +108,8 @@ function newAnyFile(file: AnyFile | Folder | string) {
         return file.path;
     }
     return file;
+}
+
+export function findAnyFiles(inFolder: Folder = folder(), anyGlob?: AnyGlob) {
+    return globFiles(file, inFolder, anyGlob);
 }
