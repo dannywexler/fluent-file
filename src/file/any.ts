@@ -63,42 +63,29 @@ export class AnyFile {
         };
     }
 
-    toString() {
-        return this.#path;
-    }
+    toString = () => this.#path;
 
-    getParentFolder() {
-        return new Folder(this.#parentPath);
-    }
+    getParentFolder = () => new Folder(this.#parentPath);
 
-    async exists() {
+    exists = async () => {
         try {
             const stats = await stat(this.#path);
             return stats.isFile();
         } catch (_) {
             return false;
         }
-    }
+    };
 
-    async ensureExists() {
-        await ensureFile(this.#path);
-    }
+    ensureExists = () => ensureFile(this.#path);
 
-    async delete() {
-        await remove(this.#path);
-    }
+    delete = () => remove(this.#path);
 
-    readText() {
-        return readFileText(this.path);
-    }
+    readText = () => readFileText(this.path);
 
-    readTextLines() {
-        return this.readText().map((str) => str.split(NEWLINE_REGEX));
-    }
+    readTextLines = () =>
+        this.readText().map((str) => str.split(NEWLINE_REGEX));
 
-    writeText(content: string) {
-        return writeFileText(this.path, content);
-    }
+    writeText = (content: string) => writeFileText(this.path, content);
 }
 
 export function file(

@@ -1,9 +1,4 @@
-import type {
-    Spacing,
-    Strings,
-    UnknownParser,
-    UnknownStringifier,
-} from "$/common/types";
+import type { Spacing, Strings } from "$/common/types";
 import { zodResult } from "$/common/zod";
 import { AnyFile } from "$/file/any";
 import type { Folder } from "$/folder/folder";
@@ -15,7 +10,7 @@ import type { ZodTypeAny, z } from "zod";
 const safeJsonParse = fromThrowable(
     (text: string) => parseJson(text),
     (parseErr) => parseErr as JsonParseError,
-) satisfies UnknownParser<JsonParseError>;
+);
 
 const configuredStringify = configure({
     circularValue: Error,
@@ -23,8 +18,8 @@ const configuredStringify = configure({
 });
 
 const safeJsonStringify = fromThrowable(
-    (unknownContents: unknown, space: Spacing) => {
-        const results = configuredStringify(unknownContents, null, space);
+    (unknownContents: unknown, options: Spacing) => {
+        const results = configuredStringify(unknownContents, null, options);
         if (results === undefined) {
             throw new Error("Undefined returned from stringify!!!");
         }
@@ -35,13 +30,10 @@ const safeJsonStringify = fromThrowable(
         return results;
     },
     (stringifyError) => stringifyError as Error,
-) satisfies UnknownStringifier;
+);
 
 export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
     protected readonly fileSchema: FileSchema;
-    protected readonly unknownParser: UnknownParser = safeJsonParse;
-    protected readonly unknownStringifier: UnknownStringifier =
-        safeJsonStringify;
 
     constructor(
         fileSchema: FileSchema,
@@ -52,23 +44,18 @@ export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
         this.fileSchema = fileSchema;
     }
 
-    read() {
-        return this.readText()
-            .andThen(this.unknownParser)
-            .andThen((unknownContents) =>
-                zodResult(this.fileSchema, unknownContents),
-            );
-    }
+    protected validateUnknown = (unknownContents: unknown) =>
+        zodResult(this.fileSchema, unknownContents);
 
-    write(contents: z.infer<FileSchema>, spacing?: string | number) {
-        return zodResult(this.fileSchema, contents)
+    read = () =>
+        this.readText().andThen(safeJsonParse).andThen(this.validateUnknown);
+
+    write = (contents: z.infer<FileSchema>, spacing: Spacing = 2) =>
+        this.validateUnknown(contents)
             .andThen((unknownContents) =>
-                this.unknownStringifier(unknownContents, spacing ?? 2),
+                safeJsonStringify(unknownContents, spacing),
             )
-            .asyncAndThen((stringifiedContents) =>
-                this.writeText(stringifiedContents),
-            );
-    }
+            .asyncAndThen(this.writeText);
 }
 
 export function jsonFile<FileSchema extends ZodTypeAny>(

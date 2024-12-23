@@ -48,46 +48,30 @@ export class Folder {
         };
     }
 
-    toString() {
-        return this.#path;
-    }
+    toString = () => this.#path;
 
-    getStats() {
-        return getFolderStats(this.#path);
-    }
+    getStats = () => getFolderStats(this.#path);
 
-    async exists() {
-        return this.getStats().map(() => true);
-    }
+    exists = () => this.getStats().map(() => true);
 
-    async ensureExists() {
-        await ensureDir(this.#path);
-    }
+    ensureExists = () => ensureDir(this.#path);
 
-    async ensureEmpty() {
-        await emptyDir(this.#path);
-    }
+    ensureEmpty = () => emptyDir(this.#path);
 
-    async delete() {
-        await remove(this.#path);
-    }
+    delete = () => remove(this.#path);
 
-    getParentFolder() {
-        return new Folder(this.#parentPath);
-    }
+    getParentFolder = () => new Folder(this.#parentPath);
 
-    subFolder(folder: string | Folder, ...extraPathPieces: Strings) {
+    subFolder = (folder: string | Folder, ...extraPathPieces: Strings) => {
         const firstPathPiece = folder instanceof Folder ? folder.path : folder;
         return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
-    }
+    };
 
-    childFolders(globPattern: AnyGlob) {
-        return globFolders(this.#path, globPattern, 1).map(this.#pathsMapper);
-    }
+    childFolders = (globPattern: AnyGlob) =>
+        globFolders(this.#path, globPattern, 1).map(this.#pathsMapper);
 
-    findFolders(globPattern: AnyGlob) {
-        return globFolders(this.#path, globPattern).map(this.#pathsMapper);
-    }
+    findFolders = (globPattern: AnyGlob) =>
+        globFolders(this.#path, globPattern).map(this.#pathsMapper);
 }
 
 export function folder(folder?: string | Folder): Folder;
