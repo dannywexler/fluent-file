@@ -1,8 +1,8 @@
-import { NodeErrorCode, assertIsNodeError } from "$/common/node";
+import { FileEntryType, NodeErrorCode, assertIsNodeError } from "$/common/node";
 import {
     FileNotFoundError,
     FileReadError,
-    FileWasFolderError,
+    FileWasNotFileError,
     FileWriteError,
 } from "$/file/any.errors";
 import { readFile, writeFile } from "fs-extra";
@@ -19,7 +19,11 @@ export function readFileText(path: string) {
                 return new FileNotFoundError(path, nodeErr);
             }
             if (nodeErr.code === NodeErrorCode.EISDIR) {
-                return new FileWasFolderError(path, nodeErr);
+                return new FileWasNotFileError(
+                    path,
+                    FileEntryType.Directory,
+                    nodeErr,
+                );
             }
             return new FileReadError(path, nodeErr);
         },
@@ -32,7 +36,11 @@ export function writeFileText(path: string, text: string) {
         (nodeErr) => {
             assertIsNodeError(nodeErr);
             if (nodeErr.code === NodeErrorCode.EISDIR) {
-                return new FileWasFolderError(path, nodeErr);
+                return new FileWasNotFileError(
+                    path,
+                    FileEntryType.Directory,
+                    nodeErr,
+                );
             }
             return new FileWriteError(path, nodeErr);
         },

@@ -1,108 +1,111 @@
 {
-    "name": "fluent-file",
-    "version": "0.1.0",
-    "description": "A fluent TypeScript library for working with files and folders",
-    "keywords": [
-        "files",
-        "folders",
-        "fluent"
-    ],
-    "repository": "github:dannywexler/fluent-file",
-    "author": "Danny Wexler",
-    "license": "MIT",
-    "type": "module",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "default": "./dist/index.js"
-        }
+  "name": "fluent-file",
+  "version": "0.1.0",
+  "description": "A fluent TypeScript library for working with files and folders",
+  "keywords": [
+    "files",
+    "folders",
+    "fluent"
+  ],
+  "repository": "github:dannywexler/fluent-file",
+  "author": "Danny Wexler",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "overrides": {
+    "esbuild": "0.24.0"
+  },
+  "dependencies": {
+    "fluent-ms": "link:fluent-ms",
+    "fs-extra": "^11.2.0",
+    "globby": "^14.0.2",
+    "neverthrow": "^8.1.1",
+    "parse-json": "^8.1.0",
+    "pathe": "^1.1.2",
+    "safe-stable-stringify": "^2.5.0",
+    "sharp": "^0.33.5",
+    "sharp-phash": "^2.2.0",
+    "simple-git": "^3.27.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.8",
+    "wireit": "^0.14.9"
+  },
+  "scripts": {
+    "build": "wireit",
+    "test": "wireit",
+    "test:watch": "vitest"
+  },
+  "wireit": {
+    "lint": {
+      "command": "biome check --error-on-warnings --colors=force --write src",
+      "files": [
+        "src"
+      ],
+      "output": []
     },
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "files": [
+    "check": {
+      "command": "tsc --build --pretty",
+      "dependencies": [
+        "lint"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json"
+      ],
+      "output": [
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "test": {
+      "command": "vitest run",
+      "dependencies": [
+        "check"
+      ],
+      "files": [
+        "src",
+        "test"
+      ],
+      "output": []
+    },
+    "build": {
+      "command": "tsup",
+      "dependencies": [
+        "test"
+      ],
+      "files": [
+        "src",
+        "tsconfig.json",
+        "tsconfig.tsbuildinfo",
+        "tsup.config.ts"
+      ],
+      "output": [
         "dist"
-    ],
-    "overrides": {
-        "esbuild": "0.24.0"
-    },
-    "dependencies": {
-        "fs-extra": "^11.2.0",
-        "fluent-ms": "link:fluent-ms",
-        "globby": "^14.0.2",
-        "neverthrow": "^8.1.1",
-        "parse-json": "^8.1.0",
-        "pathe": "^1.1.2",
-        "safe-stable-stringify": "^2.5.0",
-        "simple-git": "^3.27.0",
-        "yaml": "^2.6.1",
-        "zod": "^3.24.1"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "^1.9.4",
-        "@types/fs-extra": "^11.0.4",
-        "@types/node": "^22.10.2",
-        "tsup": "^8.3.5",
-        "typescript": "^5.7.2",
-        "vite-tsconfig-paths": "^5.1.4",
-        "vitest": "^2.1.8",
-        "wireit": "^0.14.9"
-    },
-    "scripts": {
-        "build": "wireit",
-        "test": "wireit",
-        "test:watch": "vitest"
-    },
-    "wireit": {
-        "lint": {
-            "command": "biome check --error-on-warnings --colors=force --write src",
-            "files": [
-                "src"
-            ],
-            "output": []
-        },
-        "check": {
-            "command": "tsc --build --pretty",
-            "dependencies": [
-                "lint"
-            ],
-            "files": [
-                "src/**/*.ts",
-                "tsconfig.json"
-            ],
-            "output": [
-                "tsconfig.tsbuildinfo"
-            ]
-        },
-        "test": {
-            "command": "vitest run",
-            "dependencies": [
-                "check"
-            ],
-            "files": [
-                "src",
-                "test"
-            ],
-            "output": []
-        },
-        "build": {
-            "command": "tsup",
-            "dependencies": [
-                "test"
-            ],
-            "files": [
-                "src",
-                "tsconfig.json",
-                "tsconfig.tsbuildinfo",
-                "tsup.config.ts"
-            ],
-            "output": [
-                "dist"
-            ]
-        }
-    },
-    "trustedDependencies": [
-        "@biomejs/biome",
-        "esbuild"
-    ]
+      ]
+    }
+  },
+  "trustedDependencies": [
+    "@biomejs/biome",
+    "esbuild",
+    "sharp"
+  ]
 }

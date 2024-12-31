@@ -1,9 +1,10 @@
 import { homedir } from "node:os";
 import { type AnyGlob, globFiles } from "$/common/glob";
+import { getFileStats } from "$/common/stats";
 import { NEWLINE_REGEX, readFileText, writeFileText } from "$/common/text";
 import type { Strings } from "$/common/types";
 import { Folder, folder } from "$/folder/folder";
-import { ensureFile, remove, stat } from "fs-extra";
+import { ensureFile, remove } from "fs-extra";
 import { basename, dirname, resolve } from "pathe";
 
 export class AnyFile {
@@ -68,14 +69,9 @@ export class AnyFile {
 
     getParentFolder = () => new Folder(this.#parentPath);
 
-    exists = async () => {
-        try {
-            const stats = await stat(this.#path);
-            return stats.isFile();
-        } catch (_) {
-            return false;
-        }
-    };
+    getStats = () => getFileStats(this);
+
+    exists = () => this.getStats().map(() => true);
 
     ensureExists = () => ensureFile(this.#path);
 

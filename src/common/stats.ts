@@ -1,4 +1,10 @@
-import { type NodeError, checkFileEntryType, isNodeError } from "$/common/node";
+import {
+    type NodeError,
+    assertIsNodeError,
+    checkFileEntryType,
+} from "$/common/node";
+import type { AnyFile } from "$/file/any";
+import { FileWasNotFileError } from "$/file/any.errors";
 import type { Folder } from "$/folder/folder";
 import { FolderWasNotFolderError } from "$/folder/folder.errors";
 import { stat } from "fs-extra";
@@ -18,10 +24,31 @@ export function getFolderStats(folder: Folder) {
             );
         },
         (error) => {
-            if (isNodeError(error)) {
-                return error as NodeError;
+            if (error instanceof FolderWasNotFolderError) {
+                return error as FolderWasNotFolderError;
             }
-            return error as FolderWasNotFolderError;
+            assertIsNodeError(error);
+            return error as NodeError;
+        },
+    )();
+}
+
+export function getFileStats(file: AnyFile) {
+    return ResultAsync.fromThrowable(
+        async () => {
+            const stats = await stat(file.path);
+
+            if (stats.isFile()) {
+                return stats;
+            }
+            throw new FileWasNotFileError(file.path, checkFileEntryType(stats));
+        },
+        (error) => {
+            if (error instanceof FileWasNotFileError) {
+                return error as FileWasNotFileError;
+            }
+            assertIsNodeError(error);
+            return error as NodeError;
         },
     )();
 }
