@@ -51,7 +51,7 @@ export class Folder {
 
     getStats = () => getFolderStats(this);
 
-    exists = () => this.getStats().map(() => true);
+    exists = async () => (await this.getStats()).isOk();
 
     ensureExists = () => ensureDir(this.#path);
 

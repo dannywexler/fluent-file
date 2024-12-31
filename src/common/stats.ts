@@ -14,7 +14,6 @@ export function getFolderStats(folder: Folder) {
     return ResultAsync.fromThrowable(
         async () => {
             const stats = await stat(folder.path);
-
             if (stats.isDirectory()) {
                 return stats;
             }
@@ -37,7 +36,6 @@ export function getFileStats(file: AnyFile) {
     return ResultAsync.fromThrowable(
         async () => {
             const stats = await stat(file.path);
-
             if (stats.isFile()) {
                 return stats;
             }

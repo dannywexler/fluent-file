@@ -71,7 +71,7 @@ export class AnyFile {
 
     getStats = () => getFileStats(this);
 
-    exists = () => this.getStats().map(() => true);
+    exists = async () => (await this.getStats()).isOk();
 
     ensureExists = () => ensureFile(this.#path);
 
