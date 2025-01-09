@@ -1,8 +1,11 @@
-import { imageFile, phashCheck, PhashSimilarity } from "$/file/image";
+import { PhashSimilarity, imageFile, phashCheck } from "$/file/image";
+import { folder } from "$/folder/folder";
 import { describe, expect, test } from "vitest";
 
+const imagesFolder = folder("tests", "image");
+
 describe("boat.jpg", () => {
-    const boatJpg = imageFile("tests", "files", "boat.jpg");
+    const boatJpg = imageFile(imagesFolder, "boat.jpg");
 
     const phash = "2g6w5vsjt1j40";
     test(`phash equals ${phash}`, async () => {
@@ -20,7 +23,7 @@ describe("boat.jpg", () => {
     });
 
     test("convert to avif", async () => {
-        let avifImg = imageFile("tests", "files", "boat.avif");
+        let avifImg = imageFile(imagesFolder, "boat.avif");
         await avifImg.delete();
         avifImg = await boatJpg.convertToAvif();
         const { height, width } = await avifImg.sharp.metadata();
@@ -31,7 +34,7 @@ describe("boat.jpg", () => {
     const newHeight = 360;
     const newWidth = 640;
     test("convert to avif and shrink", async () => {
-        let smallImg = imageFile("tests", "files", "boat_small.avif");
+        let smallImg = imageFile(imagesFolder, "boat_small.avif");
         await smallImg.delete();
         smallImg = await boatJpg.convertToAvif({
             height: newHeight,
@@ -43,20 +46,20 @@ describe("boat.jpg", () => {
         expect(width).toBe(newWidth);
     });
 
-    test(`phash check`, async () => {
-        const exactHaystack = ["2g6w5vsjt1j40", "1fyflvk9hg7pc"]
-        const res = phashCheck(phash, exactHaystack)
-        expect(res.case).toEqual(PhashSimilarity.Exact)
-        expect(res.phash).toEqual(phash)
+    test("phash check", () => {
+        const exactHaystack = ["2g6w5vsjt1j40", "1fyflvk9hg7pc"];
+        const res = phashCheck(phash, exactHaystack);
+        expect(res.case).toEqual(PhashSimilarity.Exact);
+        expect(res.phash).toEqual(phash);
 
-        const similar = ["2r9zp5r7kcn40", "3f88o523c8nb4", "1fyflvk9hg7pc"]
-        const res2 = phashCheck(phash, similar)
-        expect(res2.case).toEqual(PhashSimilarity.Similar)
-        expect(res2.phash).toEqual(similar.at(0))
+        const similar = ["2r9zp5r7kcn40", "3f88o523c8nb4", "1fyflvk9hg7pc"];
+        const res2 = phashCheck(phash, similar);
+        expect(res2.case).toEqual(PhashSimilarity.Similar);
+        expect(res2.phash).toEqual(similar.at(0));
 
-        const unique = ["1fyflvk9hg7pc"]
-        const res3 = phashCheck(phash, unique)
-        expect(res3.case).toEqual(PhashSimilarity.Unique)
-        expect(res3.phash).toEqual(phash)
+        const unique = ["1fyflvk9hg7pc"];
+        const res3 = phashCheck(phash, unique);
+        expect(res3.case).toEqual(PhashSimilarity.Unique);
+        expect(res3.phash).toEqual(phash);
     });
 });

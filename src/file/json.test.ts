@@ -14,7 +14,7 @@ test("hello.json", async () => {
     const changed: Hello = {
         hello: "changed",
     };
-    const helloFile = jsonFile(helloSchema, "tests", "files", "hello.json");
+    const helloFile = jsonFile(helloSchema, "tests", "json", "hello.json");
     // console.log({ helloFile: helloFile.info })
     console.log(helloFile.info);
     const writeResult = await helloFile.write(initial);
