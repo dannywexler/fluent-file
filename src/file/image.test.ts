@@ -1,4 +1,4 @@
-import { imageFile } from "$/file/image";
+import { imageFile, phashCheck, PhashSimilarity } from "$/file/image";
 import { describe, expect, test } from "vitest";
 
 describe("boat.jpg", () => {
@@ -41,5 +41,22 @@ describe("boat.jpg", () => {
         const { height, width } = await smallImg.sharp.metadata();
         expect(height).toBe(newHeight);
         expect(width).toBe(newWidth);
+    });
+
+    test(`phash check`, async () => {
+        const exactHaystack = ["2g6w5vsjt1j40", "1fyflvk9hg7pc"]
+        const res = phashCheck(phash, exactHaystack)
+        expect(res.case).toEqual(PhashSimilarity.Exact)
+        expect(res.phash).toEqual(phash)
+
+        const similar = ["2r9zp5r7kcn40", "3f88o523c8nb4", "1fyflvk9hg7pc"]
+        const res2 = phashCheck(phash, similar)
+        expect(res2.case).toEqual(PhashSimilarity.Similar)
+        expect(res2.phash).toEqual(similar.at(0))
+
+        const unique = ["1fyflvk9hg7pc"]
+        const res3 = phashCheck(phash, unique)
+        expect(res3.case).toEqual(PhashSimilarity.Unique)
+        expect(res3.phash).toEqual(phash)
     });
 });

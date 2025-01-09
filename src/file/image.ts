@@ -5,6 +5,8 @@ import type { Folder } from "$/folder/folder";
 import sharpLib, { type Sharp, type AvifOptions } from "sharp";
 import sharpPhash from "sharp-phash";
 
+const MAX_DIFFERENCES = 6
+
 export type ToAvifOptions = {
     newFolder?: Folder;
     newName?: string;
@@ -74,3 +76,31 @@ export function base2to36(base2: string) {
 export function base36to2(base36: string) {
     return Number.parseInt(base36, 36).toString(2);
 }
+
+export function phashCheck(needle: string, haystack: Strings) {
+    const needleBits = base36to2(needle)
+    for (const hay of haystack) {
+        if (needle === hay) {
+            return { case: PhashSimilarity.Exact, phash: needle }
+        }
+        const hayBits = base36to2(hay)
+        let differences = 0
+        for (let i = 0; i < needleBits.length && differences <= MAX_DIFFERENCES; i++) {
+            differences += Math.abs(needleBits.charCodeAt(i) - hayBits.charCodeAt(i))
+        }
+        if (differences < MAX_DIFFERENCES) {
+            // console.log('Only', differences, "between", needle, "and", hay)
+            return { case: PhashSimilarity.Similar, phash: hay }
+        }
+    }
+
+    return { case: PhashSimilarity.Unique, phash: needle }
+}
+
+export enum PhashSimilarity {
+    Exact = "Exact",
+    Similar = "Similar",
+    Unique = "Unique",
+}
+
+export type PhashSimilarityResult = { case: PhashSimilarity, phash: string }
