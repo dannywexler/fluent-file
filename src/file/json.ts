@@ -70,7 +70,7 @@ export function jsonFile<FileSchema extends ZodTypeAny>(
 export function findJsonFiles<FileSchema extends ZodTypeAny>(
     fileSchema: FileSchema,
     inFolder: Folder = folder(),
-    anyGlob?: AnyGlob,
+    anyGlob: AnyGlob = "*.json",
 ) {
     return globFiles(
         (filePath) => jsonFile(fileSchema, filePath),

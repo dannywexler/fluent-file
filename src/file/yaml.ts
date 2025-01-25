@@ -27,6 +27,8 @@ type YamlStringifyOptions =
 
 import type { ZodTypeAny, z } from "zod";
 
+export const YAML_EXTENSIONS = ["yaml", "yml"]
+
 const safeYamlParse = fromThrowable(
     (text: string, parseOptions?: YamlParseOptions) =>
         parseYaml(text, parseOptions),
@@ -87,7 +89,7 @@ export function yamlFile<FileSchema extends ZodTypeAny>(
 export function findYamlFiles<FileSchema extends ZodTypeAny>(
     fileSchema: FileSchema,
     inFolder: Folder = folder(),
-    anyGlob?: AnyGlob,
+    anyGlob: AnyGlob = { extensions: YAML_EXTENSIONS },
 ) {
     return globFiles(
         (filePath) => yamlFile(fileSchema, filePath),

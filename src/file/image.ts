@@ -1,12 +1,23 @@
-import type { Stats } from "node:fs";
 import type { Strings } from "$/common/types";
 import { AnyFile } from "$/file/any";
-import type { Folder } from "$/folder/folder";
+import { folder, type Folder } from "$/folder/folder";
 import sharpLib, { type Sharp, type AvifOptions } from "sharp";
 import sharpPhash from "sharp-phash";
+import { globFiles, type AnyGlob } from "$/common/glob";
 
 const MAX_DIFFERENCES = 6;
 const AVIF_EXT = ".avif";
+
+export const IMAGE_EXTENSIONS = [
+    "avif",
+    "gif",
+    "jpeg",
+    "jpg",
+    "png",
+    "svg",
+    "tiff",
+    "webp",
+]
 
 export type ToAvifOptions = {
     newFolder?: Folder;
@@ -14,11 +25,6 @@ export type ToAvifOptions = {
     height?: number;
     width?: number;
 } & Pick<AvifOptions, "effort" | "quality">;
-
-export type ImageFileStats = Stats & {
-    height: number;
-    width: number;
-};
 
 export class ImageFile extends AnyFile {
     readonly sharp: Sharp;
@@ -71,6 +77,13 @@ export function imageFile(
     ...extraPathPieces: Strings
 ) {
     return new ImageFile(file, ...extraPathPieces);
+}
+
+export function findImageFiles(
+    inFolder: Folder = folder(),
+    anyGlob: AnyGlob = { extensions: IMAGE_EXTENSIONS }
+) {
+    return globFiles(imageFile, inFolder, anyGlob);
 }
 
 export function base2to36(base2: string) {

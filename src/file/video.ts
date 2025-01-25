@@ -3,10 +3,25 @@ import { zodResult } from "$/common/zod";
 import { AnyFile } from "$/file/any";
 import type { ImageFile } from "$/file/image";
 import { VideoMetaDataSchema } from "$/file/video.schemas";
-import type { Folder } from "$/folder/folder";
+import { folder, type Folder } from "$/folder/folder";
 import ffmpeg, { type FfprobeData, ffprobe } from "fluent-ffmpeg";
 import { ResultAsync } from "neverthrow";
 import { VideoMetaDataError, VideoThumbNailError } from "./video.errors";
+import { globFiles, type AnyGlob } from "$/common/glob";
+
+export const VIDEO_EXTENSIONS = [
+    "avi",
+    "flv",
+    "mkv",
+    "mov",
+    "mp4",
+    "mpeg",
+    "mpg",
+    "rm",
+    "rmvb",
+    "webm",
+    "wmv",
+]
 
 const ffProbePromise = (filePath: string) =>
     new Promise<FfprobeData>((resolve, reject) =>
@@ -76,4 +91,11 @@ export function videoFile(
     ...extraPathPieces: Strings
 ) {
     return new VideoFile(file, ...extraPathPieces);
+}
+
+export function findVideoFiles(
+    inFolder: Folder = folder(),
+    anyGlob: AnyGlob = { extensions: VIDEO_EXTENSIONS }
+) {
+    return globFiles(videoFile, inFolder, anyGlob);
 }
