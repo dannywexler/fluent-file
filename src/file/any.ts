@@ -4,7 +4,15 @@ import { getFileStats } from "$/common/stats";
 import { NEWLINE_REGEX, readFileText, writeFileText } from "$/common/text";
 import type { Strings } from "$/common/types";
 import { Folder, folder } from "$/folder/folder";
-import { ensureFile, remove } from "fs-extra";
+import {
+    constants,
+    copyFile,
+    ensureFile,
+    ensureLink,
+    ensureSymlink,
+    move,
+    remove,
+} from "fs-extra";
 import { basename, dirname, resolve } from "pathe";
 
 export class AnyFile {
@@ -74,6 +82,46 @@ export class AnyFile {
     exists = async () => (await this.getStats()).isOk();
 
     ensureExists = () => ensureFile(this.#path);
+
+    copyTo = async (destination: AnyFile | Folder) => {
+        const targetFile =
+            destination instanceof AnyFile
+                ? destination
+                : file(destination, this.#fullName);
+        await targetFile.getParentFolder().ensureExists();
+        await targetFile.delete();
+        await copyFile(this.#path, targetFile.path, constants.COPYFILE_FICLONE);
+    };
+
+    moveTo = async (destination: AnyFile | Folder) => {
+        const targetFile =
+            destination instanceof AnyFile
+                ? destination
+                : file(destination, this.#fullName);
+        await targetFile.getParentFolder().ensureExists();
+        await targetFile.delete();
+        await move(this.#path, targetFile.path);
+    };
+
+    linkTo = async (destination: AnyFile | Folder) => {
+        const targetFile =
+            destination instanceof AnyFile
+                ? destination
+                : file(destination, this.#fullName);
+        await targetFile.getParentFolder().ensureExists();
+        await targetFile.delete();
+        await ensureLink(this.#path, targetFile.path);
+    };
+
+    symlinkTo = async (destination: AnyFile | Folder) => {
+        const targetFile =
+            destination instanceof AnyFile
+                ? destination
+                : file(destination, this.#fullName);
+        await targetFile.getParentFolder().ensureExists();
+        await targetFile.delete();
+        await ensureSymlink(this.#path, targetFile.path);
+    };
 
     delete = () => remove(this.#path);
 

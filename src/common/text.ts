@@ -5,7 +5,7 @@ import {
     FileWasNotFileError,
     FileWriteError,
 } from "$/file/any.errors";
-import { readFile, writeFile } from "fs-extra";
+import { outputFile, readFile } from "fs-extra";
 import { ResultAsync } from "neverthrow";
 
 export const NEWLINE_REGEX = /\n|\r|\r\n/;
@@ -32,7 +32,7 @@ export function readFileText(path: string) {
 
 export function writeFileText(path: string, text: string) {
     return ResultAsync.fromThrowable(
-        () => writeFile(path, text),
+        () => outputFile(path, text),
         (nodeErr) => {
             assertIsNodeError(nodeErr);
             if (nodeErr.code === NodeErrorCode.EISDIR) {
