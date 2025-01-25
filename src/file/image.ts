@@ -6,6 +6,7 @@ import sharpLib, { type Sharp, type AvifOptions } from "sharp";
 import sharpPhash from "sharp-phash";
 
 const MAX_DIFFERENCES = 6;
+const AVIF_EXT = ".avif";
 
 export type ToAvifOptions = {
     newFolder?: Folder;
@@ -33,11 +34,14 @@ export class ImageFile extends AnyFile {
         height,
         width,
         effort = 9,
-        quality = 90,
+        quality,
     }: ToAvifOptions = {}) => {
         const targetFolder = newFolder ? newFolder : this.getParentFolder();
-        const targetFileName = `${newName ?? this.name}.avif`;
-        const targetImageFile = imageFile(targetFolder, targetFileName);
+        let targetName = newName ?? this.name;
+        if (!targetName.endsWith(AVIF_EXT)) {
+            targetName += AVIF_EXT;
+        }
+        const targetImageFile = imageFile(targetFolder, targetName);
         const exists = await targetImageFile.exists();
         if (exists) {
             return targetImageFile;
@@ -78,24 +82,22 @@ export function base36to2(base36: string) {
 }
 
 export function phashCheck(needle: string, haystack: Strings) {
+    const hasExactMatch = haystack.includes(needle);
+    if (hasExactMatch) {
+        return { case: PhashSimilarity.Exact, phash: needle };
+    }
     const needleBits = base36to2(needle);
     for (const hay of haystack) {
-        if (needle === hay) {
-            return { case: PhashSimilarity.Exact, phash: needle };
-        }
         const hayBits = base36to2(hay);
         let differences = 0;
-        for (
-            let i = 0;
-            i < needleBits.length && differences <= MAX_DIFFERENCES;
-            i++
-        ) {
+        let i = needleBits.length;
+        while (i-- && differences <= MAX_DIFFERENCES) {
             differences += Math.abs(
                 needleBits.charCodeAt(i) - hayBits.charCodeAt(i),
             );
         }
         if (differences < MAX_DIFFERENCES) {
-            // console.log('Only', differences, "between", needle, "and", hay)
+            // console.log('Only', differences, "differences between", needle, "and", hay)
             return { case: PhashSimilarity.Similar, phash: hay };
         }
     }

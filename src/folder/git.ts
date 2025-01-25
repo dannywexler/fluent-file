@@ -74,7 +74,7 @@ export class GitFolder extends Folder {
             }
             const res = await this.git.clone(this.fullUrl, this.path);
             console.log("Cloning response:", res);
-        })();
+        });
 
     pull = () =>
         timer(`Pulling ${this.shortUrl}`, async () => {
@@ -86,7 +86,7 @@ export class GitFolder extends Folder {
             }
             const res = await this.git.pull();
             console.log(res);
-        })();
+        });
 
     getReadMe = () => file(this.path, "README.md");
 }

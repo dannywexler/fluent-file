@@ -1,20 +1,36 @@
 import { PhashSimilarity, imageFile, phashCheck } from "$/file/image";
 import { folder } from "$/folder/folder";
-import { describe, expect, test } from "vitest";
+import dl from "download";
+import { beforeAll, describe, expect, test } from "vitest";
 
+const boatUrl = "https://images.unsplash.com/photo-1464069668014-99e9cd4abf16";
 const imagesFolder = folder("tests", "image");
+const boatJpg = imageFile(imagesFolder, "boat.jpg");
 
-describe("boat.jpg", () => {
-    const boatJpg = imageFile(imagesFolder, "boat.jpg");
+beforeAll(async () => {
+    await imagesFolder.ensureExists();
+    if (await boatJpg.exists()) {
+        console.log(boatJpg.fullName, "already exists => skipping download");
+    } else {
+        console.log(boatJpg.fullName, "does not exist => downloading");
+        await dl(boatUrl, boatJpg.parentPath, {
+            filename: boatJpg.fullName,
+        });
+    }
+});
 
-    const phash = "2g6w5vsjt1j40";
-    test(`phash equals ${phash}`, async () => {
+const ogphash = "2vgns49n0x200";
+const similarPhash = "2ve73a8ac17gg";
+const diffPhash = "2npnqsy9m5s74";
+
+describe(boatJpg.fullName, () => {
+    test(`phash equals ${ogphash}`, async () => {
         const gotPhash = await boatJpg.getPhash();
-        expect(gotPhash).toEqual(phash);
+        expect(gotPhash).toEqual(ogphash);
     });
 
-    const originalHeight = 720;
-    const originalWidth = 1280;
+    const originalHeight = 3066;
+    const originalWidth = 5451;
     test(`metadata has height ${originalHeight} and width ${originalWidth}`, async () => {
         const { height, width } = await boatJpg.sharp.metadata();
         console.log({ height, width });
@@ -46,20 +62,20 @@ describe("boat.jpg", () => {
         expect(width).toBe(newWidth);
     });
 
-    test("phash check", () => {
-        const exactHaystack = ["2g6w5vsjt1j40", "1fyflvk9hg7pc"];
-        const res = phashCheck(phash, exactHaystack);
+    test("phash similarity check", () => {
+        const exactHaystack = [similarPhash, ogphash, diffPhash];
+        const res = phashCheck(ogphash, exactHaystack);
         expect(res.case).toEqual(PhashSimilarity.Exact);
-        expect(res.phash).toEqual(phash);
+        expect(res.phash).toEqual(ogphash);
 
-        const similar = ["2r9zp5r7kcn40", "3f88o523c8nb4", "1fyflvk9hg7pc"];
-        const res2 = phashCheck(phash, similar);
+        const similar = [similarPhash, diffPhash];
+        const res2 = phashCheck(ogphash, similar);
         expect(res2.case).toEqual(PhashSimilarity.Similar);
         expect(res2.phash).toEqual(similar.at(0));
 
-        const unique = ["1fyflvk9hg7pc"];
-        const res3 = phashCheck(phash, unique);
+        const unique = [diffPhash];
+        const res3 = phashCheck(ogphash, unique);
         expect(res3.case).toEqual(PhashSimilarity.Unique);
-        expect(res3.phash).toEqual(phash);
+        expect(res3.phash).toEqual(ogphash);
     });
 });

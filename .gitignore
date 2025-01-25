@@ -29,5 +29,7 @@ dist/
 .DS_Store
 
 .wireit/
-tests/image/*.avif
-tests/video/*.mp4
+
+# Media files for tests
+tests/image/
+tests/video/
