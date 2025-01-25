@@ -1,9 +1,9 @@
+import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Strings } from "$/common/types";
 import { AnyFile } from "$/file/any";
-import { folder, type Folder } from "$/folder/folder";
+import { type Folder, folder } from "$/folder/folder";
 import sharpLib, { type Sharp, type AvifOptions } from "sharp";
 import sharpPhash from "sharp-phash";
-import { globFiles, type AnyGlob } from "$/common/glob";
 
 const MAX_DIFFERENCES = 6;
 const AVIF_EXT = ".avif";
@@ -17,7 +17,7 @@ export const IMAGE_EXTENSIONS = [
     "svg",
     "tiff",
     "webp",
-]
+];
 
 export type ToAvifOptions = {
     newFolder?: Folder;
@@ -81,7 +81,7 @@ export function imageFile(
 
 export function findImageFiles(
     inFolder: Folder = folder(),
-    anyGlob: AnyGlob = { extensions: IMAGE_EXTENSIONS }
+    anyGlob: AnyGlob = { extensions: IMAGE_EXTENSIONS },
 ) {
     return globFiles(imageFile, inFolder, anyGlob);
 }

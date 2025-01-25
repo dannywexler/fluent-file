@@ -75,6 +75,9 @@ export class AnyFile {
 
     toString = () => this.#path;
 
+    // biome-ignore lint/style/useNamingConvention: needs to be this case to print
+    toJSON = () => ({ File: this.info });
+
     getParentFolder = () => new Folder(this.#parentPath);
 
     getStats = () => getFileStats(this);

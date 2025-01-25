@@ -27,7 +27,7 @@ type YamlStringifyOptions =
 
 import type { ZodTypeAny, z } from "zod";
 
-export const YAML_EXTENSIONS = ["yaml", "yml"]
+export const YAML_EXTENSIONS = ["yaml", "yml"];
 
 const safeYamlParse = fromThrowable(
     (text: string, parseOptions?: YamlParseOptions) =>

@@ -49,6 +49,9 @@ export class Folder {
 
     toString = () => this.#path;
 
+    // biome-ignore lint/style/useNamingConvention: needs to be this case to print
+    toJSON = () => ({ Folder: this.info });
+
     getStats = () => getFolderStats(this);
 
     exists = async () => (await this.getStats()).isOk();
