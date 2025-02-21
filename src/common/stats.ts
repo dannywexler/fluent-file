@@ -1,13 +1,13 @@
+import { stat } from "node:fs/promises";
 import {
     type NodeError,
     assertIsNodeError,
     checkFileEntryType,
 } from "$/common/node";
-import type { AnyFile } from "$/file/any";
+import type { AFile } from "$/file/any";
 import { FileWasNotFileError } from "$/file/any.errors";
 import type { Folder } from "$/folder/folder";
 import { FolderWasNotFolderError } from "$/folder/folder.errors";
-import { stat } from "fs-extra";
 import { ResultAsync } from "neverthrow";
 
 export function getFolderStats(folder: Folder) {
@@ -32,7 +32,7 @@ export function getFolderStats(folder: Folder) {
     )();
 }
 
-export function getFileStats(file: AnyFile) {
+export function getFileStats(file: AFile) {
     return ResultAsync.fromThrowable(
         async () => {
             const stats = await stat(file.path);

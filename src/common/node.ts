@@ -1,5 +1,5 @@
+import type { Stats } from "node:fs";
 import { objectKeys } from "$/common/objects";
-import type { Stats } from "fs-extra";
 
 // This is a basic version of SystemError
 // https://nodejs.org/api/errors.html#class-systemerror

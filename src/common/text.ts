@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { FileEntryType, NodeErrorCode, assertIsNodeError } from "$/common/node";
 import {
     FileNotFoundError,
@@ -5,7 +6,7 @@ import {
     FileWasNotFileError,
     FileWriteError,
 } from "$/file/any.errors";
-import { outputFile, readFile } from "fs-extra";
+import { outputFile } from "fs-extra/esm";
 import { ResultAsync } from "neverthrow";
 
 export const NEWLINE_REGEX = /\n|\r|\r\n/;

@@ -1,7 +1,7 @@
 import type { StringifyError } from "$/common/errors";
 import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Spacing, Strings } from "$/common/types";
-import type { AnyFile } from "$/file/any";
+import type { AFile } from "$/file/any";
 import { JsonFile } from "$/file/json";
 import { type Folder, folder } from "$/folder/folder";
 import { fromThrowable } from "neverthrow";
@@ -80,7 +80,7 @@ export class YamlFile<
 
 export function yamlFile<FileSchema extends ZodTypeAny>(
     fileSchema: FileSchema,
-    filePath: AnyFile | Folder | string,
+    filePath: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
     return new YamlFile(fileSchema, filePath, ...extraPathPieces);

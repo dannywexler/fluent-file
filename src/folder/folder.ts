@@ -1,8 +1,9 @@
 import { homedir } from "node:os";
+import { inspect } from "node:util";
 import { type AnyGlob, globFolders } from "$/common/glob";
 import { getFolderStats } from "$/common/stats";
 import type { Strings } from "$/common/types";
-import { emptyDir, ensureDir, remove } from "fs-extra";
+import { emptyDir, ensureDir, remove } from "fs-extra/esm";
 import { basename, dirname, resolve } from "pathe";
 
 export class Folder {
@@ -47,10 +48,19 @@ export class Folder {
         };
     }
 
+    relativePath = (relativeTo = cwd()) => {
+        if (this.#path.startsWith(relativeTo)) {
+            return this.#path.slice(relativeTo.length + 1);
+        }
+        return this.#path;
+    };
+
     toString = () => this.#path;
 
     // biome-ignore lint/style/useNamingConvention: needs to be this case to print
     toJSON = () => ({ Folder: this.info });
+
+    [inspect.custom] = () => this.toJSON();
 
     getStats = () => getFolderStats(this);
 
@@ -69,7 +79,7 @@ export class Folder {
         return new Folder(this.#path, firstPathPiece, ...extraPathPieces);
     };
 
-    childFolders = (globPattern: AnyGlob) => globFolders(this, globPattern, 1);
+    childFolders = (globPattern?: AnyGlob) => globFolders(this, globPattern, 1);
 
     findFolders = (globPattern: AnyGlob) => globFolders(this, globPattern);
 }
@@ -92,4 +102,8 @@ export function folder(
 
 export function homeFolder(...extraPathPieces: Strings) {
     return new Folder(homedir(), ...extraPathPieces);
+}
+
+export function cwd() {
+    return resolve(process.cwd());
 }

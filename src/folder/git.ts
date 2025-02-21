@@ -1,7 +1,7 @@
 import type { Strings } from "$/common/types";
 import { file } from "$/file/any";
 import { Folder } from "$/folder/folder";
-import { timer } from "fluent-ms";
+import logUpdate from "log-update";
 import {
     CheckRepoActions,
     type SimpleGitProgressEvent,
@@ -15,7 +15,11 @@ type GitFolderOptions = {
     baseUrl?: string;
 };
 
+const padStage = (stage: string) => stage.padEnd(11);
+
 type ProgressHandler = (progressEvent: SimpleGitProgressEvent) => void;
+
+let lastStage = "";
 
 function defaultProgressHandler({
     method,
@@ -24,15 +28,32 @@ function defaultProgressHandler({
     processed,
     total,
 }: SimpleGitProgressEvent) {
+    const methodUpper = method.toUpperCase();
+    const paddedStage = padStage(stage);
+    if (paddedStage !== lastStage) {
+        if (lastStage) {
+            logUpdate(methodUpper, lastStage, "completed");
+            logUpdate.done();
+        }
+        lastStage = paddedStage;
+        return;
+    }
     const totalLength = total.toString().length;
-    console.log(
-        method.toUpperCase(),
-        stage,
+    const cols = process.stdout.columns;
+    const processedCols = Math.max(1, Math.ceil((cols * percent) / 100));
+    const remainingCols = cols - processedCols;
+    const processedText = "=".repeat(processedCols);
+    const remainingText = "_".repeat(remainingCols);
+    const firstRow = [
+        methodUpper,
+        paddedStage,
         processed.toString().padStart(totalLength),
         "of",
-        total,
+        total.toString(),
         `(${percent.toString().padStart(2)}%)`,
-    );
+    ].join(" ");
+    const secondRow = `${processedText}${remainingText}`;
+    logUpdate(`${firstRow}\n${secondRow}`);
 }
 
 export class GitFolder extends Folder {
@@ -64,29 +85,39 @@ export class GitFolder extends Folder {
     isaRepo = async () =>
         await simpleGit(this.path).checkIsRepo(CheckRepoActions.IS_REPO_ROOT);
 
-    clone = () =>
-        timer(`Cloning ${this.shortUrl}`, async () => {
-            await this.ensureExists();
-            const isRepo = await this.isaRepo();
-            if (isRepo) {
-                console.log(this.shortUrl, "is already cloned");
-                return;
-            }
-            const res = await this.git.clone(this.fullUrl, this.path);
-            console.log("Cloning response:", res);
-        });
+    clone = async () => {
+        console.log(
+            "Cloning\n",
+            this.fullUrl,
+            "\ninto:\n",
+            this.relativePath(),
+        );
+        await this.ensureExists();
+        const isRepo = await this.isaRepo();
+        if (isRepo) {
+            console.log(this.fullUrl, "is already cloned");
+            return;
+        }
+        await this.git.clone(this.fullUrl, this.path);
+        logUpdate("CLONE", lastStage, "completed");
+        logUpdate.done();
+        console.log("Cloned\n", this.fullUrl, "\ninto:\n", this.relativePath());
+    };
 
-    pull = () =>
-        timer(`Pulling ${this.shortUrl}`, async () => {
-            await this.ensureExists();
-            const isRepo = await this.isaRepo();
-            if (!isRepo) {
-                console.log(this.shortUrl, "does not exist yet, cloning...");
-                await this.clone();
-            }
-            const res = await this.git.pull();
-            console.log(res);
-        });
+    pull = async () => {
+        console.log("Pulling", this.fullUrl);
+        await this.ensureExists();
+        const isRepo = await this.isaRepo();
+        if (!isRepo) {
+            console.log(this.fullUrl, "does not exist yet, cloning...");
+            await this.clone();
+        }
+        const res = await this.git.pull();
+        logUpdate("PULL", lastStage, "completed");
+        logUpdate.done();
+        console.log("Pulled", this.fullUrl);
+        return res;
+    };
 
     getReadMe = () => file(this.path, "README.md");
 }

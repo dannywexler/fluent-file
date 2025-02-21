@@ -1,5 +1,5 @@
 // biome-ignore lint/performance/noBarrelFile: this is the index file
-export { AnyFile, file, homeFile, findAnyFiles } from "$/file/any";
+export { AFile as AnyFile, file, homeFile, findAnyFiles } from "$/file/any";
 export { JsonFile, jsonFile, findJsonFiles } from "$/file/json";
 export {
     YamlFile,
@@ -26,5 +26,5 @@ export {
     VIDEO_EXTENSIONS,
 } from "$/file/video";
 
-export { Folder, folder, homeFolder } from "$/folder/folder";
+export { Folder, folder, homeFolder, cwd } from "$/folder/folder";
 export { GitFolder } from "$/folder/git";

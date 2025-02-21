@@ -1,21 +1,23 @@
+import { constants } from "node:fs";
+import { copyFile } from "node:fs/promises";
 import { homedir } from "node:os";
+import { inspect } from "node:util";
 import { type AnyGlob, globFiles } from "$/common/glob";
 import { getFileStats } from "$/common/stats";
 import { NEWLINE_REGEX, readFileText, writeFileText } from "$/common/text";
 import type { Strings } from "$/common/types";
-import { Folder, folder } from "$/folder/folder";
+import { Folder, cwd, folder } from "$/folder/folder";
 import {
-    constants,
-    copyFile,
     ensureFile,
     ensureLink,
     ensureSymlink,
     move,
     remove,
-} from "fs-extra";
+} from "fs-extra/esm";
 import { basename, dirname, resolve } from "pathe";
 
-export class AnyFile {
+// biome-ignore lint/style/useNamingConvention: Want to use this name
+export class AFile {
     #path: string;
     #fullName: string;
     #name: string;
@@ -23,7 +25,7 @@ export class AnyFile {
     #parentName: string;
     #parentPath: string;
 
-    constructor(file: AnyFile | Folder | string, ...extraPathPieces: Strings) {
+    constructor(file: AFile | Folder | string, ...extraPathPieces: Strings) {
         const firstPathPiece = newAnyFile(file);
         this.#path = resolve(firstPathPiece, ...extraPathPieces);
         this.#fullName = basename(this.#path);
@@ -73,10 +75,19 @@ export class AnyFile {
         };
     }
 
+    relativePath = (relativeTo = cwd()) => {
+        if (this.#path.startsWith(relativeTo)) {
+            return this.#path.slice(relativeTo.length + 1);
+        }
+        return this.#path;
+    };
+
     toString = () => this.#path;
 
     // biome-ignore lint/style/useNamingConvention: needs to be this case to print
     toJSON = () => ({ File: this.info });
+
+    [inspect.custom] = () => this.toJSON();
 
     getParentFolder = () => new Folder(this.#parentPath);
 
@@ -86,9 +97,9 @@ export class AnyFile {
 
     ensureExists = () => ensureFile(this.#path);
 
-    copyTo = async (destination: AnyFile | Folder) => {
+    copyTo = async (destination: AFile | Folder) => {
         const targetFile =
-            destination instanceof AnyFile
+            destination instanceof AFile
                 ? destination
                 : file(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
@@ -96,9 +107,9 @@ export class AnyFile {
         await copyFile(this.#path, targetFile.path, constants.COPYFILE_FICLONE);
     };
 
-    moveTo = async (destination: AnyFile | Folder) => {
+    moveTo = async (destination: AFile | Folder) => {
         const targetFile =
-            destination instanceof AnyFile
+            destination instanceof AFile
                 ? destination
                 : file(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
@@ -106,9 +117,9 @@ export class AnyFile {
         await move(this.#path, targetFile.path);
     };
 
-    linkTo = async (destination: AnyFile | Folder) => {
+    linkTo = async (destination: AFile | Folder) => {
         const targetFile =
-            destination instanceof AnyFile
+            destination instanceof AFile
                 ? destination
                 : file(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
@@ -116,9 +127,9 @@ export class AnyFile {
         await ensureLink(this.#path, targetFile.path);
     };
 
-    symlinkTo = async (destination: AnyFile | Folder) => {
+    symlinkTo = async (destination: AFile | Folder) => {
         const targetFile =
-            destination instanceof AnyFile
+            destination instanceof AFile
                 ? destination
                 : file(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
@@ -137,21 +148,21 @@ export class AnyFile {
 }
 
 export function file(
-    file: AnyFile | Folder | string,
+    file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
-    return new AnyFile(file, ...extraPathPieces);
+    return new AFile(file, ...extraPathPieces);
 }
 
 export function homeFile(
-    file: AnyFile | Folder | string,
+    file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
-    return new AnyFile(homedir(), newAnyFile(file), ...extraPathPieces);
+    return new AFile(homedir(), newAnyFile(file), ...extraPathPieces);
 }
 
-function newAnyFile(file: AnyFile | Folder | string) {
-    if (file instanceof AnyFile || file instanceof Folder) {
+function newAnyFile(file: AFile | Folder | string) {
+    if (file instanceof AFile || file instanceof Folder) {
         return file.path;
     }
     return file;

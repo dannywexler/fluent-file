@@ -42,7 +42,9 @@ async function globFactory<T>(
             ...opts,
         };
     }
-    return (await globby(mainGlob, opts)).sort().map(filePathToClass);
+    return (await globby(mainGlob, opts))
+        .sort()
+        .map((path) => filePathToClass(path));
 }
 
 export function globFiles<T>(

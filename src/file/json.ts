@@ -1,7 +1,7 @@
 import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Spacing, Strings } from "$/common/types";
 import { zodResult } from "$/common/zod";
-import { AnyFile } from "$/file/any";
+import { AFile } from "$/file/any";
 import { type Folder, folder } from "$/folder/folder";
 import { fromThrowable } from "neverthrow";
 import parseJson, { type JSONError as JsonParseError } from "parse-json";
@@ -33,12 +33,12 @@ const safeJsonStringify = fromThrowable(
     (stringifyError) => stringifyError as Error,
 );
 
-export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
+export class JsonFile<FileSchema extends ZodTypeAny> extends AFile {
     protected readonly fileSchema: FileSchema;
 
     constructor(
         fileSchema: FileSchema,
-        filePath: AnyFile | Folder | string,
+        filePath: AFile | Folder | string,
         ...extraPathPieces: Strings
     ) {
         super(filePath, ...extraPathPieces);
@@ -61,7 +61,7 @@ export class JsonFile<FileSchema extends ZodTypeAny> extends AnyFile {
 
 export function jsonFile<FileSchema extends ZodTypeAny>(
     fileSchema: FileSchema,
-    filePath: AnyFile | Folder | string,
+    filePath: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
     return new JsonFile(fileSchema, filePath, ...extraPathPieces);

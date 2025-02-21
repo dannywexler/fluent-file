@@ -1,6 +1,6 @@
 import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Strings } from "$/common/types";
-import { AnyFile } from "$/file/any";
+import { AFile } from "$/file/any";
 import { type Folder, folder } from "$/folder/folder";
 import sharpLib, { type Sharp, type AvifOptions } from "sharp";
 import sharpPhash from "sharp-phash";
@@ -26,10 +26,10 @@ export type ToAvifOptions = {
     width?: number;
 } & Pick<AvifOptions, "effort" | "quality">;
 
-export class ImageFile extends AnyFile {
+export class ImageFile extends AFile {
     readonly sharp: Sharp;
 
-    constructor(file: AnyFile | Folder | string, ...extraPathPieces: Strings) {
+    constructor(file: AFile | Folder | string, ...extraPathPieces: Strings) {
         super(file, ...extraPathPieces);
         this.sharp = sharpLib(this.path);
     }
@@ -73,7 +73,7 @@ export class ImageFile extends AnyFile {
 }
 
 export function imageFile(
-    file: AnyFile | Folder | string,
+    file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
     return new ImageFile(file, ...extraPathPieces);

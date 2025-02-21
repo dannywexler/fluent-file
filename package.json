@@ -28,9 +28,9 @@
   },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.3",
-    "fluent-ms": "link:fluent-ms",
     "fs-extra": "^11.2.0",
     "globby": "^14.0.2",
+    "log-update": "^6.1.0",
     "neverthrow": "^8.1.1",
     "parse-json": "^8.1.0",
     "pathe": "^1.1.2",

@@ -1,11 +1,11 @@
 import { type AnyGlob, globFiles } from "$/common/glob";
 import type { Strings } from "$/common/types";
 import { zodResult } from "$/common/zod";
-import { AnyFile } from "$/file/any";
+import { AFile } from "$/file/any";
 import type { ImageFile } from "$/file/image";
 import { VideoMetaDataSchema } from "$/file/video.schemas";
 import { type Folder, folder } from "$/folder/folder";
-import ffmpeg, { type FfprobeData, ffprobe } from "fluent-ffmpeg";
+import ffmpeg, { type FfprobeData } from "fluent-ffmpeg";
 import { ResultAsync } from "neverthrow";
 import { VideoMetaDataError, VideoThumbNailError } from "./video.errors";
 
@@ -25,7 +25,7 @@ export const VIDEO_EXTENSIONS = [
 
 const ffProbePromise = (filePath: string) =>
     new Promise<FfprobeData>((resolve, reject) =>
-        ffprobe(filePath, (ffprobeError, data) => {
+        ffmpeg.ffprobe(filePath, (ffprobeError, data) => {
             if (ffprobeError) {
                 reject(ffprobeError);
             }
@@ -52,7 +52,7 @@ const thumbnailHelper = (
             }),
     );
 
-export class VideoFile extends AnyFile {
+export class VideoFile extends AFile {
     getMetaData = () =>
         this.getStats().andThen(() =>
             ResultAsync.fromThrowable(
@@ -87,7 +87,7 @@ export class VideoFile extends AnyFile {
 }
 
 export function videoFile(
-    file: AnyFile | Folder | string,
+    file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
     return new VideoFile(file, ...extraPathPieces);
