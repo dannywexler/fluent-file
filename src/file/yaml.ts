@@ -68,8 +68,8 @@ export class YamlFile<
             );
 
     override write = (
-        stringifyOptions: YamlStringifyOptions,
         contents: z.infer<FileSchema>,
+        stringifyOptions?: YamlStringifyOptions,
     ) =>
         this.validateUnknown(contents)
             .andThen((unknownContents) =>

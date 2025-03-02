@@ -1,4 +1,4 @@
-import { file } from "$/file/any";
+import { afile } from "$/file/any";
 import { folder, homeFolder } from "$/folder/folder";
 import { describe, expect, test } from "vitest";
 
@@ -53,7 +53,7 @@ describe("parent - child - parent", () => {
 
     test("file from folder", () => {
         const parentFolder = folder("src");
-        const childFile = file(parentFolder, "main.ts");
+        const childFile = afile(parentFolder, "main.ts");
         const parentFolder2 = childFile.getParentFolder();
         console.log({
             parentFolder: parentFolder.info,

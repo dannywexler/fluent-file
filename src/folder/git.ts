@@ -1,5 +1,5 @@
 import type { Strings } from "$/common/types";
-import { file } from "$/file/any";
+import { afile } from "$/file/any";
 import { Folder } from "$/folder/folder";
 import logUpdate from "log-update";
 import {
@@ -119,5 +119,5 @@ export class GitFolder extends Folder {
         return res;
     };
 
-    getReadMe = () => file(this.path, "README.md");
+    getReadMe = () => afile(this.path, "README.md");
 }

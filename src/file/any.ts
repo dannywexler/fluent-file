@@ -101,7 +101,7 @@ export class AFile {
         const targetFile =
             destination instanceof AFile
                 ? destination
-                : file(destination, this.#fullName);
+                : afile(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
         await targetFile.delete();
         await copyFile(this.#path, targetFile.path, constants.COPYFILE_FICLONE);
@@ -111,7 +111,7 @@ export class AFile {
         const targetFile =
             destination instanceof AFile
                 ? destination
-                : file(destination, this.#fullName);
+                : afile(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
         await targetFile.delete();
         await move(this.#path, targetFile.path);
@@ -121,7 +121,7 @@ export class AFile {
         const targetFile =
             destination instanceof AFile
                 ? destination
-                : file(destination, this.#fullName);
+                : afile(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
         await targetFile.delete();
         await ensureLink(this.#path, targetFile.path);
@@ -131,7 +131,7 @@ export class AFile {
         const targetFile =
             destination instanceof AFile
                 ? destination
-                : file(destination, this.#fullName);
+                : afile(destination, this.#fullName);
         await targetFile.getParentFolder().ensureExists();
         await targetFile.delete();
         await ensureSymlink(this.#path, targetFile.path);
@@ -147,7 +147,7 @@ export class AFile {
     writeText = (content: string) => writeFileText(this.path, content);
 }
 
-export function file(
+export function afile(
     file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
@@ -168,6 +168,6 @@ function newAnyFile(file: AFile | Folder | string) {
     return file;
 }
 
-export function findAnyFiles(inFolder: Folder = folder(), anyGlob?: AnyGlob) {
-    return globFiles(file, inFolder, anyGlob);
+export function findFiles(inFolder: Folder = folder(), anyGlob?: AnyGlob) {
+    return globFiles(afile, inFolder, anyGlob);
 }

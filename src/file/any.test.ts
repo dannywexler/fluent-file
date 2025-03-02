@@ -1,4 +1,4 @@
-import { file } from "$/file/any";
+import { afile } from "$/file/any";
 import { describe, expect, test } from "vitest";
 
 describe("Construction variations", () => {
@@ -12,7 +12,7 @@ describe("Construction variations", () => {
             fullName += `.${ext}`;
         }
         const path = ["", parentName, fullName].join("/");
-        expect(file(firstPathPiece, ...extraPathPieces).info).toEqual({
+        expect(afile(firstPathPiece, ...extraPathPieces).info).toEqual({
             ext,
             fullName,
             name,
