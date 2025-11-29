@@ -1,14 +1,15 @@
-import type { Stats } from "node:fs";
-import { objectKeys } from "$/common/objects";
+import type { Stats } from "node:fs"
+
+import { objectKeys } from "$/common/objects"
 
 // This is a basic version of SystemError
 // https://nodejs.org/api/errors.html#class-systemerror
 // Why is the SystemError class not exported?
 export class NodeError extends Error {
-    readonly code!: string;
-    readonly dest: string | undefined;
-    readonly info: Record<string, unknown> | undefined;
-    readonly path: string | undefined;
+    readonly code!: string
+    readonly dest: string | undefined
+    readonly info: Record<string, unknown> | undefined
+    readonly path: string | undefined
 }
 
 // Common system errors
@@ -38,19 +39,19 @@ export function assertIsNodeError(
         "code" in maybeNodeError &&
         typeof maybeNodeError.code === "string"
     ) {
-        return;
+        return
     }
-    throw new Error("was not a Node error", { cause: maybeNodeError });
+    throw new Error("was not a Node error", { cause: maybeNodeError })
 }
 
 export function isNodeError(
     maybeNodeError: unknown,
 ): maybeNodeError is NodeError {
     try {
-        assertIsNodeError(maybeNodeError);
-        return true;
+        assertIsNodeError(maybeNodeError)
+        return true
     } catch (_) {
-        return false;
+        return false
     }
 }
 
@@ -71,13 +72,13 @@ export enum FileEntryType {
 
 export function checkFileEntryType(fsStats: Stats) {
     for (const key of objectKeys(FileEntryType)) {
-        const match = fsStats[`is${key}`]();
+        const match = fsStats[`is${key}`]()
         if (match) {
-            return FileEntryType[key];
+            return FileEntryType[key]
         }
     }
     // shold not be possible to get here
-    return FileEntryType.File;
+    return FileEntryType.File
 }
 
 // File system flags

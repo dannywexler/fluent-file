@@ -1,20 +1,23 @@
-import { getFolderStats } from "$/common/stats";
-import type { FilePathToClass, Strings } from "$/common/types";
-import { type Folder, folder } from "$/folder/folder";
-import { type Options as GlobbyOptions, globby } from "globby";
+import type { Options as GlobbyOptions } from "globby"
+import { globby } from "globby"
 
-export type AnyGlob = string | Strings | GlobOptions;
+import { getFolderStats } from "$/common/stats"
+import type { FilePathToClass, Strings } from "$/common/types"
+import type { Folder } from "$/folder/folder"
+import { folder } from "$/folder/folder"
+
+export type AnyGlob = string | Strings | GlobOptions
 export type GlobOptions = Omit<GlobbyOptions, "cwd"> &
     Partial<{
-        patterns: Strings;
-        extensions: Strings;
-    }>;
-const STAR_STAR = "**";
+        patterns: Strings
+        extensions: Strings
+    }>
+const STAR_STAR = "**"
 
 const staticGlobbyOptions: GlobbyOptions = {
     absolute: true,
     gitignore: true,
-};
+}
 
 async function globFactory<T>(
     filePathToClass: FilePathToClass<T>,
@@ -26,25 +29,24 @@ async function globFactory<T>(
         cwd: folder.path,
         ...staticGlobbyOptions,
         ...overrides,
-    };
-    let mainGlob: string | Strings = STAR_STAR;
+    }
+    let mainGlob: string | Strings = STAR_STAR
     if (typeof anyGlob === "string" || Array.isArray(anyGlob)) {
-        mainGlob = anyGlob;
+        mainGlob = anyGlob
     } else {
-        const { patterns, extensions, expandDirectories, ...userOpts } =
-            anyGlob;
+        const { patterns, extensions, expandDirectories, ...userOpts } = anyGlob
         if (patterns) {
-            mainGlob = patterns;
+            mainGlob = patterns
         }
         opts = {
             expandDirectories: extensions ? { extensions } : true,
             ...userOpts,
             ...opts,
-        };
+        }
     }
     return (await globby(mainGlob, opts))
         .sort()
-        .map((path) => filePathToClass(path));
+        .map((path) => filePathToClass(path))
 }
 
 export function globFiles<T>(
@@ -55,7 +57,7 @@ export function globFiles<T>(
 ) {
     return getFolderStats(folder).map(() =>
         globFactory(filePathToClass, folder, { deep }, anyGlob),
-    );
+    )
 }
 
 export function globFolders(
@@ -65,5 +67,5 @@ export function globFolders(
 ) {
     return getFolderStats(cwd).map(() =>
         globFactory(folder, cwd, { onlyDirectories: true, deep }, anyGlob),
-    );
+    )
 }

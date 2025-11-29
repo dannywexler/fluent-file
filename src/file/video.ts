@@ -1,13 +1,17 @@
-import { type AnyGlob, globFiles } from "$/common/glob";
-import type { Strings } from "$/common/types";
-import { zodResult } from "$/common/zod";
-import { AFile } from "$/file/any";
-import type { ImageFile } from "$/file/image";
-import { VideoMetaDataSchema } from "$/file/video.schemas";
-import { type Folder, folder } from "$/folder/folder";
-import ffmpeg, { type FfprobeData } from "fluent-ffmpeg";
-import { ResultAsync } from "neverthrow";
-import { VideoMetaDataError, VideoThumbNailError } from "./video.errors";
+import ffmpeg, { type FfprobeData } from "fluent-ffmpeg"
+import { ResultAsync } from "neverthrow"
+
+import type { AnyGlob } from "$/common/glob"
+import { globFiles } from "$/common/glob"
+import type { Strings } from "$/common/types"
+import { zodResult } from "$/common/zod"
+import { AFile } from "$/file/any"
+import type { ImageFile } from "$/file/image"
+import { VideoMetaDataSchema } from "$/file/video.schemas"
+import type { Folder } from "$/folder/folder"
+import { folder } from "$/folder/folder"
+
+import { VideoMetaDataError, VideoThumbNailError } from "./video.errors"
 
 export const VIDEO_EXTENSIONS = [
     "avi",
@@ -21,17 +25,17 @@ export const VIDEO_EXTENSIONS = [
     "rmvb",
     "webm",
     "wmv",
-];
+]
 
 const ffProbePromise = (filePath: string) =>
     new Promise<FfprobeData>((resolve, reject) =>
         ffmpeg.ffprobe(filePath, (ffprobeError, data) => {
             if (ffprobeError) {
-                reject(ffprobeError);
+                reject(ffprobeError)
             }
-            resolve(data);
+            resolve(data)
         }),
-    );
+    )
 
 const thumbnailHelper = (
     videoPath: string,
@@ -50,7 +54,7 @@ const thumbnailHelper = (
                 timestamps:
                     typeof timestamp === "string" ? [timestamp] : [timestamp],
             }),
-    );
+    )
 
 export class VideoFile extends AFile {
     getMetaData = () =>
@@ -62,40 +66,40 @@ export class VideoFile extends AFile {
             )().andThen((ffprobeData) =>
                 zodResult(VideoMetaDataSchema, ffprobeData),
             ),
-        );
+        )
 
     getThumbnail = (timestamp: string | number, destination: ImageFile) =>
         ResultAsync.fromThrowable(
             async () => {
-                const alreadyExists = await destination.exists();
+                const alreadyExists = await destination.exists()
                 if (alreadyExists) {
-                    return destination;
+                    return destination
                 }
-                const targetFolder = destination.getParentFolder();
-                await targetFolder.ensureExists();
+                const targetFolder = destination.getParentFolder()
+                await targetFolder.ensureExists()
                 await thumbnailHelper(
                     this.path,
                     targetFolder.path,
                     `${destination.name}.png`,
                     timestamp,
-                );
-                return destination;
+                )
+                return destination
             },
             (ffmpegError) =>
                 new VideoThumbNailError(this.path, ffmpegError as Error),
-        )();
+        )()
 }
 
 export function videoFile(
     file: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
-    return new VideoFile(file, ...extraPathPieces);
+    return new VideoFile(file, ...extraPathPieces)
 }
 
 export function findVideoFiles(
     inFolder: Folder = folder(),
     anyGlob: AnyGlob = { extensions: VIDEO_EXTENSIONS },
 ) {
-    return globFiles(videoFile, inFolder, anyGlob);
+    return globFiles(videoFile, inFolder, anyGlob)
 }

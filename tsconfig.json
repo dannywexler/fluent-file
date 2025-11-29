@@ -24,6 +24,9 @@
         "skipLibCheck": true,
         "strict": true,
         "target": "ESNext",
+        "types": [
+            "vitest/importMeta"
+        ],
         "verbatimModuleSyntax": true,
         "paths": {
             "$/*": [

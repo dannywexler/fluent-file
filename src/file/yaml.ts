@@ -1,39 +1,41 @@
-import type { StringifyError } from "$/common/errors";
-import { type AnyGlob, globFiles } from "$/common/glob";
-import type { Spacing, Strings } from "$/common/types";
-import type { AFile } from "$/file/any";
-import { JsonFile } from "$/file/json";
-import { type Folder, folder } from "$/folder/folder";
-import { fromThrowable } from "neverthrow";
-import {
-    type CreateNodeOptions,
-    type DocumentOptions,
-    type ParseOptions,
-    type SchemaOptions,
-    type ToJSOptions,
-    type ToStringOptions,
-    type YAMLParseError,
-    parse as parseYaml,
-    stringify as stringifyYaml,
-} from "yaml";
+import { fromThrowable } from "neverthrow"
+import type {
+    CreateNodeOptions,
+    DocumentOptions,
+    ParseOptions,
+    SchemaOptions,
+    ToJSOptions,
+    ToStringOptions,
+    YAMLParseError,
+} from "yaml"
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml"
+
+import type { StringifyError } from "$/common/errors"
+import type { AnyGlob } from "$/common/glob"
+import { globFiles } from "$/common/glob"
+import type { Spacing, Strings } from "$/common/types"
+import type { AFile } from "$/file/any"
+import { JsonFile } from "$/file/json"
+import type { Folder } from "$/folder/folder"
+import { folder } from "$/folder/folder"
 
 type YamlParseOptions = ParseOptions &
     DocumentOptions &
     SchemaOptions &
-    ToJSOptions;
+    ToJSOptions
 type YamlStringifyOptions =
     | (DocumentOptions & SchemaOptions & CreateNodeOptions & ToStringOptions)
-    | Spacing;
+    | Spacing
 
-import type { ZodTypeAny, z } from "zod";
+import type { ZodTypeAny, z } from "zod"
 
-export const YAML_EXTENSIONS = ["yaml", "yml"];
+export const YAML_EXTENSIONS = ["yaml", "yml"]
 
 const safeYamlParse = fromThrowable(
     (text: string, parseOptions?: YamlParseOptions) =>
         parseYaml(text, parseOptions),
     (parseErr) => parseErr as YAMLParseError,
-);
+)
 
 const safeYamlStringify = fromThrowable(
     (unknownContents: unknown, stringifyOptions: YamlStringifyOptions = 2) => {
@@ -41,21 +43,21 @@ const safeYamlStringify = fromThrowable(
             return stringifyYaml(unknownContents, {
                 indent: Number.parseInt(stringifyOptions),
                 sortMapEntries: true,
-            });
+            })
         }
         if (typeof stringifyOptions === "number") {
             return stringifyYaml(unknownContents, {
                 indent: stringifyOptions,
                 sortMapEntries: true,
-            });
+            })
         }
         return stringifyYaml(unknownContents, {
             sortMapEntries: true,
             ...stringifyOptions,
-        });
+        })
     },
     (stringifyError) => stringifyError as StringifyError,
-);
+)
 
 export class YamlFile<
     FileSchema extends ZodTypeAny,
@@ -63,9 +65,7 @@ export class YamlFile<
     override read = (parseOptions?: YamlParseOptions) =>
         this.readText()
             .andThen((text) => safeYamlParse(text, parseOptions))
-            .andThen((unknownContents) =>
-                this.validateUnknown(unknownContents),
-            );
+            .andThen((unknownContents) => this.validateUnknown(unknownContents))
 
     override write = (
         contents: z.infer<FileSchema>,
@@ -75,7 +75,7 @@ export class YamlFile<
             .andThen((unknownContents) =>
                 safeYamlStringify(unknownContents, stringifyOptions),
             )
-            .asyncAndThen(this.writeText);
+            .asyncAndThen(this.writeText)
 }
 
 export function yamlFile<FileSchema extends ZodTypeAny>(
@@ -83,7 +83,7 @@ export function yamlFile<FileSchema extends ZodTypeAny>(
     filePath: AFile | Folder | string,
     ...extraPathPieces: Strings
 ) {
-    return new YamlFile(fileSchema, filePath, ...extraPathPieces);
+    return new YamlFile(fileSchema, filePath, ...extraPathPieces)
 }
 
 export function findYamlFiles<FileSchema extends ZodTypeAny>(
@@ -95,5 +95,5 @@ export function findYamlFiles<FileSchema extends ZodTypeAny>(
         (filePath) => yamlFile(fileSchema, filePath),
         inFolder,
         anyGlob,
-    );
+    )
 }

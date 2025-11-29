@@ -1,8 +1,9 @@
-import type { ParseError, StringifyError } from "$/common/errors";
-import type { Result } from "neverthrow";
+import type { Result } from "neverthrow"
 
-export type Strings = Array<string>;
-export type UnknownObject<Key extends string = string> = Record<Key, unknown>;
+import type { ParseError, StringifyError } from "$/common/errors"
+
+export type Strings = Array<string>
+export type UnknownObject<Key extends string = string> = Record<Key, unknown>
 
 export type UnknownParser<
     SomeParseOptions,
@@ -10,7 +11,7 @@ export type UnknownParser<
 > = (
     text: string,
     parseOptions?: SomeParseOptions,
-) => Result<unknown, SomeParseError>;
+) => Result<unknown, SomeParseError>
 
 export type UnknownStringifier<
     SomeStringifyOptions,
@@ -18,8 +19,8 @@ export type UnknownStringifier<
 > = (
     unknownContents: string,
     stringifyOptions?: SomeStringifyOptions,
-) => Result<string, SomeStringifyError>;
+) => Result<string, SomeStringifyError>
 
-export type Spacing = string | number | undefined;
+export type Spacing = string | number | undefined
 
-export type FilePathToClass<T> = (filePath: string) => T;
+export type FilePathToClass<T> = (filePath: string) => T

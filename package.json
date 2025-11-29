@@ -23,9 +23,6 @@
   "files": [
     "dist"
   ],
-  "overrides": {
-    "esbuild": "0.24.0"
-  },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.3",
     "fs-extra": "^11.2.0",
@@ -42,74 +39,24 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "2.2.6",
     "@types/download": "^8.0.5",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.2",
     "download": "^8.0.0",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
+    "lefthook": "^1.13.6",
+    "tsdown": "^0.12.9",
+    "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.8",
-    "wireit": "^0.14.9"
+    "vitest": "^3.2.4"
   },
   "scripts": {
-    "build": "wireit",
-    "test": "wireit",
+    "build": "lefthook run build",
     "test:watch": "vitest"
-  },
-  "wireit": {
-    "lint": {
-      "command": "biome check --error-on-warnings --colors=force --write src",
-      "files": [
-        "src"
-      ],
-      "output": []
-    },
-    "check": {
-      "command": "tsc --build --pretty",
-      "dependencies": [
-        "lint"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tsconfig.json"
-      ],
-      "output": [
-        "tsconfig.tsbuildinfo"
-      ]
-    },
-    "test": {
-      "command": "vitest run",
-      "dependencies": [
-        "check"
-      ],
-      "files": [
-        "src",
-        "test"
-      ],
-      "output": []
-    },
-    "build": {
-      "command": "tsup",
-      "dependencies": [
-        "test"
-      ],
-      "files": [
-        "src",
-        "tsconfig.json",
-        "tsconfig.tsbuildinfo",
-        "tsup.config.ts"
-      ],
-      "output": [
-        "dist"
-      ]
-    }
   },
   "trustedDependencies": [
     "@biomejs/biome",
-    "esbuild",
     "sharp"
   ]
 }
