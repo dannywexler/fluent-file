@@ -1,86 +1,137 @@
-import { describe } from "vitest"
+import dl from "download"
+import { assert, beforeAll, describe, expect, test } from "vitest"
 
-describe.todo("image tests")
+import { folder } from "$/folder/folder"
 
-// import dl from "download"
-// import { beforeAll, describe, expect, test } from "vitest"
-//
-// import { imageFile, PhashSimilarity, phashCheck } from "$/file/image"
-// import { folder } from "$/folder/folder"
-//
-// const boatUrl = "https://images.unsplash.com/photo-1464069668014-99e9cd4abf16"
-// const imagesFolder = folder("tests", "image")
-// const boatJpg = imageFile(imagesFolder, "boat.jpg")
-//
-// beforeAll(async () => {
-//     await imagesFolder.ensureExists()
-//     if (await boatJpg.exists()) {
-//         console.log(boatJpg.fullName, "already exists => skipping download")
-//     } else {
-//         console.log(boatJpg.fullName, "does not exist => downloading")
-//         await dl(boatUrl, boatJpg.parentPath, {
-//             filename: boatJpg.fullName,
-//         })
-//     }
-// })
-//
-// const ogphash = "2vgns49n0x200"
-// const similarPhash = "2ve73a8ac17gg"
-// const diffPhash = "2npnqsy9m5s74"
-//
-// describe(boatJpg.fullName, () => {
-//     test(`phash equals ${ogphash}`, async () => {
-//         const gotPhash = await boatJpg.getPhash()
-//         expect(gotPhash).toEqual(ogphash)
-//     })
-//
-//     const originalHeight = 3066
-//     const originalWidth = 5451
-//     test(`metadata has height ${originalHeight} and width ${originalWidth}`, async () => {
-//         const { height, width } = await boatJpg.sharp.metadata()
-//         console.log({ height, width })
-//         expect(height).toBe(originalHeight)
-//         expect(width).toBe(originalWidth)
-//     })
-//
-//     test("convert to avif", async () => {
-//         let avifImg = imageFile(imagesFolder, "boat.avif")
-//         await avifImg.delete()
-//         avifImg = await boatJpg.convertToAvif()
-//         const { height, width } = await avifImg.sharp.metadata()
-//         expect(height).toBe(originalHeight)
-//         expect(width).toBe(originalWidth)
-//     })
-//
-//     const newHeight = 360
-//     const newWidth = 640
-//     test("convert to avif and shrink", async () => {
-//         let smallImg = imageFile(imagesFolder, "boat_small.avif")
-//         await smallImg.delete()
-//         smallImg = await boatJpg.convertToAvif({
-//             height: newHeight,
-//             width: newWidth,
-//             newName: "boat_small",
-//         })
-//         const { height, width } = await smallImg.sharp.metadata()
-//         expect(height).toBe(newHeight)
-//         expect(width).toBe(newWidth)
-//     })
-//
-//     test("phash similarity check", () => {
-//         const exactHaystack = [similarPhash, ogphash, diffPhash]
-//         const res = phashCheck(ogphash, exactHaystack)
-//         expect(res.case).toEqual(PhashSimilarity.Exact)
-//         expect(res.phash).toEqual(ogphash)
-//
-//         const similar = [similarPhash, diffPhash]
-//         const res2 = phashCheck(ogphash, similar)
-//         expect(res2.case).toEqual(PhashSimilarity.Similar)
-//         expect(res2.phash).toEqual(similar.at(0))
-//
-//         const unique = [diffPhash]
-//         const res3 = phashCheck(ogphash, unique)
-//         expect(res3.case).toEqual(PhashSimilarity.Unique)
-//         expect(res3.phash).toEqual(ogphash)
-//     })
-// })
+import type { PhashString } from "./image"
+import { comparePhashes, phashesMatch } from "./image"
+
+const timeout = 240_000
+const effort = 0
+
+const boatUrl = "https://images.unsplash.com/photo-1464069668014-99e9cd4abf16"
+const imagesFolder = folder("tests", "image")
+const boatJPG = imagesFolder.file("boat.jpg")
+const boatAVIF = imagesFolder.file("boat.avif")
+const boatSmallAVIF = imagesFolder.file("boat_small.avif")
+
+beforeAll(async () => {
+    await imagesFolder.ensureExists()
+    if (await boatJPG.exists()) {
+        // console.log(boatJPG.name(), "already exists => skipping download")
+    } else {
+        // biome-ignore lint/suspicious/noConsole: want to know if downloading
+        console.log(boatJPG.name(), "does not exist => downloading")
+        await dl(boatUrl, imagesFolder.path, {
+            filename: boatJPG.name(),
+        })
+        assert(await boatJPG.exists())
+        // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
+        console.log(boatJPG.name(), "downloaded successfully")
+    }
+})
+
+const ogphash = "bcfcacadb444d212" as PhashString
+const similarPhash = "bcfcacadb444d214" as PhashString
+const diffPhash = "1bf2a5a7b94012d4" as PhashString
+const diffPhashDifference = 22
+
+describe(boatJPG.name(), () => {
+    test("similar phashes", () => {
+        const { level, diff } = comparePhashes(ogphash, similarPhash)
+        expect(diff).toEqual(2)
+        expect(level).toEqual("SIMILAR")
+        expect(phashesMatch(ogphash, similarPhash)).toEqual(true)
+    })
+
+    test("different phashes", () => {
+        const { level, diff } = comparePhashes(ogphash, diffPhash)
+        expect(diff).toEqual(diffPhashDifference)
+        expect(level).toEqual("DIFFERENT")
+        expect(phashesMatch(ogphash, diffPhash)).toEqual(false)
+    })
+
+    const originalHeight = 3066
+    const originalWidth = 5451
+    test("metadata has expected height and width", async () => {
+        const result = await boatJPG.image().metadata()
+        assert(result.isOk())
+
+        expect(result.value.height).toBe(originalHeight)
+        expect(result.value.width).toBe(originalWidth)
+    })
+
+    test(
+        "convert to avif",
+        async () => {
+            const removeResult = await boatAVIF.remove()
+            assert(removeResult.isOk())
+            const toavifResult = await boatJPG.image().toAVIF({ effort })
+            assert(toavifResult.isOk())
+            const returnedavifImg = toavifResult.value
+            const returnedavifImgMetadataResult = await returnedavifImg
+                .image()
+                .metadata()
+            assert(returnedavifImgMetadataResult.isOk())
+            expect(returnedavifImgMetadataResult.value.height).toBe(
+                originalHeight,
+            )
+            expect(returnedavifImgMetadataResult.value.width).toBe(
+                originalWidth,
+            )
+            expect(returnedavifImg.ext()).toEqual("avif")
+        },
+        timeout,
+    )
+
+    const newHeight = 360
+    const newWidth = 640
+    test(
+        "convert to avif and shrink",
+        async () => {
+            assert((await boatSmallAVIF.remove()).isOk())
+            const smallImgResult = await boatJPG.image().toAVIF({
+                // height: newHeight,
+                width: newWidth,
+                newBaseName: "boat_small",
+                effort,
+            })
+            assert(smallImgResult.isOk())
+            const smallerImg = smallImgResult.value
+            const smallerImgMetaResult = await smallerImg.image().metadata()
+            assert(smallerImgMetaResult.isOk())
+            const smallerImgMeta = smallerImgMetaResult.value
+            expect(smallerImgMeta.height).toEqual(newHeight)
+            expect(smallerImgMeta.width).toEqual(newWidth)
+        },
+        timeout,
+    )
+
+    test("phash of jpg equals original", async () => {
+        const result = await boatJPG.image().phash()
+        assert(result.isOk())
+        expect(result.value).toEqual(ogphash)
+    })
+
+    test("phash of avif equals jpg", async () => {
+        const result = await boatAVIF.image().phash()
+        assert(result.isOk())
+        const avifphash = result.value
+        expect(ogphash).toEqual(avifphash)
+        const { level, diff } = comparePhashes(ogphash, avifphash)
+        expect(level).toEqual("SAME")
+        expect(diff).toEqual(0)
+        expect(phashesMatch(ogphash, avifphash)).toEqual(true)
+    })
+
+    test("phash of avif_small equals jpg", async () => {
+        const result = await boatSmallAVIF.image().phash()
+        assert(result.isOk())
+        const avifsmallphash = result.value
+        expect(ogphash).toEqual(avifsmallphash)
+        const { level, diff } = comparePhashes(ogphash, avifsmallphash)
+        expect(level).toEqual("SAME")
+        expect(diff).toEqual(0)
+        expect(phashesMatch(ogphash, avifsmallphash)).toEqual(true)
+    })
+})

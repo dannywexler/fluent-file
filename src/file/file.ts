@@ -317,7 +317,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         )
 
         const toAVIF = ResultAsync.fromThrowable(
-            async (toAVIFOptions: ToAVIFOptions) => {
+            async (toAVIFOptions: ToAVIFOptions = {}) => {
                 const {
                     newFolder = this.folder(),
                     newBaseName = this.#basename,

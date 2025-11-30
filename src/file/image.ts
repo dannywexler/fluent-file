@@ -24,13 +24,18 @@ export type ImageResizeOptions = ImageOutputOptions & ResizeOptions
 
 // const op: AvifOptions = {}
 // const rs: ResizeOptions = {background}
-//
+/**
+ * Level of CPU effort to reduce the file size.
+ * Between 0 (fastest) and 9 (slowest)
+ * @default 4
+ */
+
 export type ToAVIFOptions = ImageOutputOptions & ResizeOptions & AvifOptions
 
 export type PhashSimilarity = "SAME" | "SIMILAR" | "DIFFERENT"
 
 export type PhashSimilarityInfo = {
-    readonly case: PhashSimilarity
+    readonly level: PhashSimilarity
     readonly diff: number
 }
 
@@ -85,11 +90,11 @@ export const DEFAULT_PHASH_THRESHOLD =
     })
     ```
 
- * Can be used for filtering by checking the `case` of the return value
+ * Can be used for filtering by checking the `level` of the return value
  * @example
     ```ts
     // all items in haystack that are the same or similar to the needle
-    const matches = phashHaystack.filter(hay => comparePhashes(phashNeedle, hay).case !== "DIFFERENT")
+    const matches = phashHaystack.filter(hay => comparePhashes(phashNeedle, hay).level !== "DIFFERENT")
     ```
  *
  * @see `phashesMatch` For a simpler function that returns a boolean of whether the two phashes are similar
@@ -99,15 +104,15 @@ export function comparePhashes(
     phashB: PhashString,
     threshold: PhashThreshold = DEFAULT_PHASH_THRESHOLD,
 ): PhashSimilarityInfo {
-    const phashAbin = phashStringSchema.encode(phashA)
-    const phashBbin = phashStringSchema.encode(phashB)
-
-    if (phashAbin === phashBbin) {
+    if (phashA === phashB) {
         return Object.freeze({
-            case: "SAME",
+            level: "SAME",
             diff: 0,
         })
     }
+    const phashAbin = phashStringSchema.encode(phashA)
+    const phashBbin = phashStringSchema.encode(phashB)
+
     let diff = 0
     let i = PHASH_LENGTH
     while (i--) {
@@ -115,9 +120,9 @@ export function comparePhashes(
             diff++
         }
     }
-    const casename = diff < threshold ? "SIMILAR" : "DIFFERENT"
+    const level = diff < threshold ? "SIMILAR" : "DIFFERENT"
     return Object.freeze({
-        case: casename,
+        level,
         diff,
     })
 }
@@ -137,12 +142,12 @@ export function phashesMatch(
     phashB: PhashString,
     threshold: PhashThreshold = DEFAULT_PHASH_THRESHOLD,
 ) {
+    if (phashA === phashB) {
+        return true
+    }
     const phashAbin = phashStringSchema.encode(phashA)
     const phashBbin = phashStringSchema.encode(phashB)
 
-    if (phashAbin === phashBbin) {
-        return true
-    }
     let diff = 0
     let i = PHASH_LENGTH
     while (i--) {
