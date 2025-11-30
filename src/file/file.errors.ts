@@ -7,6 +7,10 @@ export type FileOperation =
     | "stat"
     | "symlink"
     | "write"
+    | "image_metadata"
+    | "image_resize"
+    | "image_convert"
+    | "image_phash"
 
 abstract class FileError extends Error {
     readonly operation: FileOperation
@@ -41,6 +45,30 @@ export class FileWriteError extends FileError {
 export class FileRemoveError extends FileError {
     constructor(path: string, cause?: unknown) {
         super("remove", path, cause)
+    }
+}
+
+export class ImageMetadataError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("image_metadata", path, cause)
+    }
+}
+
+export class ImageResizeError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("image_resize", path, cause)
+    }
+}
+
+export class ImageConvertError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("image_convert", path, cause)
+    }
+}
+
+export class ImagePhashError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("image_phash", path, cause)
     }
 }
 

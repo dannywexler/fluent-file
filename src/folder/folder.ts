@@ -54,7 +54,7 @@ export class FluentFolder {
     toString = () => this.path
 
     // biome-ignore lint/style/useNamingConvention: needs to be this case to print
-    toJSON = () => ({ Folder: this.info });
+    toJSON = () => ({ FluentFolder: this.info });
 
     [inspect.custom] = () => this.toJSON()
 

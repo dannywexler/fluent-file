@@ -1,130 +1,157 @@
-// import sharpLib, { type AvifOptions, type Sharp } from "sharp"
-// import sharpPhash from "sharp-phash"
+import type { AvifOptions, ResizeOptions } from "sharp"
+import z from "zod"
+
+import type { FluentFolder } from "$/folder/folder"
+export const MAX_DIFFERENCES = 6
+
+export const IMAGE_EXTENSIONS = [
+    "avif",
+    "gif",
+    "jpeg",
+    "jpg",
+    "png",
+    "svg",
+    "tiff",
+    "webp",
+]
+
+export type ImageOutputOptions = {
+    newFolder?: FluentFolder
+    newBaseName?: string
+}
+
+export type ImageResizeOptions = ImageOutputOptions & ResizeOptions
+
+// const op: AvifOptions = {}
+// const rs: ResizeOptions = {background}
 //
-// import type { AnyGlob } from "$/common/glob"
-// import { globFiles } from "$/common/glob"
-// import type { Strings } from "$/common/types"
-// import { AFile } from "$/file/any"
-// import type { Folder } from "$/folder/folder"
-// import { folder } from "$/folder/folder"
-//
-// const MAX_DIFFERENCES = 6
-// const AVIF_EXT = ".avif"
-//
-// export const IMAGE_EXTENSIONS = [
-//     "avif",
-//     "gif",
-//     "jpeg",
-//     "jpg",
-//     "png",
-//     "svg",
-//     "tiff",
-//     "webp",
-// ]
-//
-// export type ToAvifOptions = {
-//     newFolder?: Folder
-//     newName?: string
-//     height?: number
-//     width?: number
-// } & Pick<AvifOptions, "effort" | "quality">
-//
-// export class ImageFile extends AFile {
-//     readonly sharp: Sharp
-//
-//     constructor(file: AFile | Folder | string, ...extraPathPieces: Strings) {
-//         super(file, ...extraPathPieces)
-//         this.sharp = sharpLib(this.path)
-//     }
-//
-//     convertToAvif = async ({
-//         newFolder,
-//         newName,
-//         height,
-//         width,
-//         effort = 9,
-//         quality,
-//     }: ToAvifOptions = {}) => {
-//         const targetFolder = newFolder ? newFolder : this.getParentFolder()
-//         let targetName = newName ?? this.name
-//         if (!targetName.endsWith(AVIF_EXT)) {
-//             targetName += AVIF_EXT
-//         }
-//         const targetImageFile = imageFile(targetFolder, targetName)
-//         const exists = await targetImageFile.exists()
-//         if (exists) {
-//             return targetImageFile
-//         }
-//         await targetImageFile.getParentFolder().ensureExists()
-//         await this.sharp
-//             .resize({
-//                 fit: "contain",
-//                 height,
-//                 width,
-//                 withoutEnlargement: true,
-//             })
-//             .avif({ effort, quality })
-//             .toFile(targetImageFile.path)
-//
-//         return targetImageFile
-//     }
-//
-//     getPhash = async () => {
-//         const base2Res = await sharpPhash(this.path)
-//         return base2to36(base2Res)
-//     }
-// }
-//
-// export function imageFile(
-//     file: AFile | Folder | string,
-//     ...extraPathPieces: Strings
-// ) {
-//     return new ImageFile(file, ...extraPathPieces)
-// }
-//
-// export function findImageFiles(
-//     inFolder: Folder = folder(),
-//     anyGlob: AnyGlob = { extensions: IMAGE_EXTENSIONS },
-// ) {
-//     return globFiles(imageFile, inFolder, anyGlob)
-// }
-//
-// export function base2to36(base2: string) {
-//     return Number.parseInt(base2, 2).toString(36)
-// }
-//
-// export function base36to2(base36: string) {
-//     return Number.parseInt(base36, 36).toString(2)
-// }
-//
-// export function phashCheck(needle: string, haystack: Strings) {
-//     const hasExactMatch = haystack.includes(needle)
-//     if (hasExactMatch) {
-//         return { case: PhashSimilarity.Exact, phash: needle }
-//     }
-//     const needleBits = base36to2(needle)
-//     for (const hay of haystack) {
-//         const hayBits = base36to2(hay)
-//         let differences = 0
-//         let i = needleBits.length
-//         while (i-- && differences <= MAX_DIFFERENCES) {
-//             differences += Math.abs(
-//                 needleBits.charCodeAt(i) - hayBits.charCodeAt(i),
-//             )
-//         }
-//         if (differences < MAX_DIFFERENCES) {
-//             // console.log('Only', differences, "differences between", needle, "and", hay)
-//             return { case: PhashSimilarity.Similar, phash: hay }
-//         }
-//     }
-//
-//     return { case: PhashSimilarity.Unique, phash: needle }
-// }
-//
-// export enum PhashSimilarity {
-//     Exact = "Exact",
-//     Similar = "Similar",
-//     Unique = "Unique",
-// }
-//
-// export type PhashSimilarityResult = { case: PhashSimilarity; phash: string }
+export type ToAVIFOptions = ImageOutputOptions & ResizeOptions & AvifOptions
+
+export type PhashSimilarity = "SAME" | "SIMILAR" | "DIFFERENT"
+
+export type PhashSimilarityInfo = {
+    readonly case: PhashSimilarity
+    readonly diff: number
+}
+
+const PHASH_LENGTH = 64
+const HEX_RADIX = 16
+
+export const binaryStringRegex = /^[01]+$/
+
+export const phashStringSchema = z.codec(
+    z.string().regex(binaryStringRegex).length(PHASH_LENGTH),
+    z.hex().brand("PhashString"),
+    {
+        decode: (binaryString) =>
+            BigInt(`0b${binaryString}`).toString(HEX_RADIX),
+        encode: (hexString) =>
+            BigInt(`0x${hexString}`).toString(2).padStart(PHASH_LENGTH, "0"),
+    },
+)
+export type PhashString = z.output<typeof phashStringSchema>
+
+export const phashThresholdSchema = z
+    .int()
+    .nonnegative()
+    .max(PHASH_LENGTH)
+    .brand("PhashThreshold")
+export type PhashThreshold = z.infer<typeof phashThresholdSchema>
+const DEFAULT_THRESHOLD = 6
+export const DEFAULT_PHASH_THRESHOLD =
+    phashThresholdSchema.parse(DEFAULT_THRESHOLD)
+
+/**
+ * Compares two phashes, and returns information about how similar the two phashes are, based on the (optional) threshold.
+ *
+ * @param {PhashString} phashA
+ * @param {PhashString} phashB
+ * @param {PhashThreshold} [threshold] - Must be an integer 0-64 (inclusive). Defaults to 6.
+ * If there are fewer than `threshold` differences, the images are similar
+ *
+ * @example Given a needle and a haystack:
+    ```ts
+    const phashNeedle = "1a...8f" // (hex-encoded string)
+    const phashHaystack = ["2b..3c", "4d..5e"] // (Array of hex-encoded strings)
+    ```
+ *
+ * Can be used for sorting by using the `diff` count of the return value
+ * @example
+    ```ts
+    const sorted = phashHaystack.sort((phashA, phashB) => {
+        const adiff = comparePhashes(phashNeedle, phashA).diff
+        const bdiff = comparePhashes(phashNeedle, phashB).diff
+        return adiff - bdiff
+    })
+    ```
+
+ * Can be used for filtering by checking the `case` of the return value
+ * @example
+    ```ts
+    // all items in haystack that are the same or similar to the needle
+    const matches = phashHaystack.filter(hay => comparePhashes(phashNeedle, hay).case !== "DIFFERENT")
+    ```
+ *
+ * @see `phashesMatch` For a simpler function that returns a boolean of whether the two phashes are similar
+ */
+export function comparePhashes(
+    phashA: PhashString,
+    phashB: PhashString,
+    threshold: PhashThreshold = DEFAULT_PHASH_THRESHOLD,
+): PhashSimilarityInfo {
+    const phashAbin = phashStringSchema.encode(phashA)
+    const phashBbin = phashStringSchema.encode(phashB)
+
+    if (phashAbin === phashBbin) {
+        return Object.freeze({
+            case: "SAME",
+            diff: 0,
+        })
+    }
+    let diff = 0
+    let i = PHASH_LENGTH
+    while (i--) {
+        if (phashAbin[i] !== phashBbin[i]) {
+            diff++
+        }
+    }
+    const casename = diff < threshold ? "SIMILAR" : "DIFFERENT"
+    return Object.freeze({
+        case: casename,
+        diff,
+    })
+}
+
+/**
+ * Checks if two phashes `match` based on the (optional) threshold
+ *
+ * @param {PhashString} phashA
+ * @param {PhashString} phashB
+ * @param {PhashThreshold} [threshold] - Must be an integer 0-64 (inclusive). Defaults to 6.
+ * If there are fewer than `threshold` differences, the images are similar
+ *
+ * @returns whether the two phashes are similar
+ */
+export function phashesMatch(
+    phashA: PhashString,
+    phashB: PhashString,
+    threshold: PhashThreshold = DEFAULT_PHASH_THRESHOLD,
+) {
+    const phashAbin = phashStringSchema.encode(phashA)
+    const phashBbin = phashStringSchema.encode(phashB)
+
+    if (phashAbin === phashBbin) {
+        return true
+    }
+    let diff = 0
+    let i = PHASH_LENGTH
+    while (i--) {
+        if (phashAbin[i] !== phashBbin[i]) {
+            diff++
+        }
+        if (diff >= threshold) {
+            return false
+        }
+    }
+    return true
+}

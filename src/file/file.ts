@@ -15,6 +15,8 @@ import {
 } from "fs-extra/esm"
 import { ResultAsync } from "neverthrow"
 import pathe from "pathe"
+import sharpLib, { type SharpOptions } from "sharp"
+import sharpPhash from "sharp-phash"
 import type { ParseOptions, StringifyOptions } from "zerde"
 import { zparse, zstringify } from "zerde"
 
@@ -30,8 +32,15 @@ import {
     FileStatError,
     FileSymLinkError,
     FileWriteError,
+    ImageConvertError,
+    ImageMetadataError,
+    ImagePhashError,
+    ImageResizeError,
 } from "$/file/file.errors"
 import { FluentFolder } from "$/folder/folder"
+
+import type { ImageResizeOptions, ToAVIFOptions } from "./image"
+import { phashStringSchema } from "./image"
 
 export class FluentFile<Content = string, ParsedContent = Content> {
     #path: string
@@ -76,7 +85,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     toString = () => this.path
 
     // biome-ignore lint/style/useNamingConvention: needs to be this case to print
-    toJSON = () => ({ Folder: this.info });
+    toJSON = () => ({ FluentFile: this.info });
 
     [inspect.custom] = () => this.toJSON()
 
@@ -281,6 +290,71 @@ export class FluentFile<Content = string, ParsedContent = Content> {
                 await this.writeText(textContent, options)
             },
         )
+    }
+
+    image = (sharpOptions: SharpOptions = {}) => {
+        const sharpInstance = sharpLib(this.#path, sharpOptions)
+
+        const metadata = ResultAsync.fromThrowable(
+            () => sharpInstance.metadata(),
+            (someError) => new ImageMetadataError(this.#path, someError),
+        )
+
+        const resize = ResultAsync.fromThrowable(
+            async (resizeOptions: ImageResizeOptions) => {
+                const {
+                    newFolder = this.folder(),
+                    newBaseName = this.#basename,
+                    ...options
+                } = resizeOptions
+                const targetFile = newFolder.file(`${newBaseName}.${this.#ext}`)
+                await targetFile.remove()
+                await newFolder.ensureExists()
+                await sharpInstance.resize(options).toFile(targetFile.path())
+                return targetFile
+            },
+            (someError) => new ImageResizeError(this.#path, someError),
+        )
+
+        const toAVIF = ResultAsync.fromThrowable(
+            async (toAVIFOptions: ToAVIFOptions) => {
+                const {
+                    newFolder = this.folder(),
+                    newBaseName = this.#basename,
+                    ...options
+                } = toAVIFOptions
+                const targetFile = newFolder.file(`${newBaseName}.avif`)
+                await targetFile.remove()
+                await newFolder.ensureExists()
+                await sharpInstance
+                    .resize(options)
+                    .avif(options)
+                    .toFile(targetFile.path())
+                return targetFile
+            },
+            (someError) => new ImageConvertError(this.#path, someError),
+        )
+
+        const phash = ResultAsync.fromThrowable(
+            async () => {
+                const phashResponse = await sharpPhash(this.#path, sharpOptions)
+                return phashStringSchema.decode(phashResponse)
+            },
+            (someError) => new ImagePhashError(this.#path, someError),
+        )
+
+        return {
+            ...sharpInstance,
+            metadata,
+            resize,
+            toAVIF,
+            /**
+             * Calculate the perceptual hash of an image
+             * @returns A hex-encoded string
+             * @see Use `comparePhashes` or `phashesMatch` to compare the returned phash
+             */
+            phash,
+        }
     }
 }
 
