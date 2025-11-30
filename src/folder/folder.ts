@@ -1,11 +1,15 @@
+import { stat } from "node:fs/promises"
 import { homedir } from "node:os"
 import { inspect } from "node:util"
 
 import { emptyDir, ensureDir, remove } from "fs-extra/esm"
+import { ResultAsync } from "neverthrow"
 import { basename, resolve } from "pathe"
 
 import { normalizeAndResolvePath } from "$/common/path"
 import { ffile } from "$/file/file"
+
+import { FolderError } from "./folder.errors"
 
 export class FluentFolder {
     readonly path: string
@@ -45,9 +49,24 @@ export class FluentFolder {
 
     [inspect.custom] = () => this.toJSON()
 
-    // getStats = () => getFolderStats(this)
+    stats = ResultAsync.fromThrowable(
+        async () => {
+            const stats = await stat(this.path)
+            if (stats.isDirectory()) {
+                return stats
+            } else {
+                throw new FolderError("stat", this.path, "FolderWasNotFolder")
+            }
+        },
+        (someError) => {
+            if (someError instanceof FolderError) {
+                return someError
+            }
+            return new FolderError("stat", this.path, someError)
+        },
+    )
 
-    // exists = async () => (await this.getStats()).isOk()
+    exists = async () => (await this.stats()).isOk()
 
     ensureExists = () => ensureDir(this.path)
 

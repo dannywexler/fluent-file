@@ -3,7 +3,7 @@ import { copyFile, readFile, stat } from "node:fs/promises"
 import { homedir } from "node:os"
 
 import type { StandardSchemaV1 } from "@standard-schema/spec"
-import type { MoveOptions, WriteFileOptions } from "fs-extra/esm"
+import type { WriteFileOptions } from "fs-extra/esm"
 import {
     ensureFile,
     ensureLink,
@@ -20,7 +20,16 @@ import { zparse, zstringify } from "zerde"
 import type { FsFlag } from "$/common/node"
 import { normalizeAndResolvePath } from "$/common/path"
 import { parseString } from "$/common/schema"
-import { FileError } from "$/file/file.errors"
+import {
+    FileCopyError,
+    FileLinkError,
+    FileMoveError,
+    FileReadError,
+    FileRemoveError,
+    FileStatError,
+    FileSymLinkError,
+    FileWriteError,
+} from "$/file/file.errors"
 import { FluentFolder } from "$/folder/folder"
 
 export class FluentFile<Content = string, ParsedContent = Content> {
@@ -50,9 +59,10 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
     constructor(
         schema: StandardSchemaV1<Content, ParsedContent>,
+        file: string | number,
         ...pathPieces: Array<string | number>
     ) {
-        this.#path = normalizeAndResolvePath(...pathPieces)
+        this.#path = normalizeAndResolvePath(file, ...pathPieces)
         this.#schema = schema
         const parsed = parseFilePath(this.#path)
         this.#folderPath = parsed.folderPath
@@ -128,14 +138,14 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             if (stats.isFile()) {
                 return stats
             } else {
-                throw new FileError("stat", this.#path, "FileWasNotFile")
+                throw new FileStatError(this.#path, "FileWasNotFile")
             }
         },
         (someError) => {
-            if (someError instanceof FileError) {
+            if (someError instanceof FileStatError) {
                 return someError
             }
-            return new FileError("stat", this.#path, someError)
+            return new FileStatError(this.#path, someError)
         },
     )
 
@@ -143,35 +153,75 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
     ensureExists = () => ensureFile(this.#path)
 
-    copyTo = async (destination: FluentFile | FluentFolder) => {
-        const destinationPath = await this.#ensureDestination(destination)
-        await copyFile(this.#path, destinationPath, constants.COPYFILE_FICLONE)
-    }
+    copyTo = ResultAsync.fromThrowable(
+        async (destination: FluentFile | FluentFolder) => {
+            let destinationPath: string | null = null
+            try {
+                destinationPath = await this.#ensureDestination(destination)
+                await copyFile(
+                    this.#path,
+                    destinationPath,
+                    constants.COPYFILE_FICLONE,
+                )
+            } catch (someError) {
+                throw new FileCopyError(this.#path, destinationPath, someError)
+            }
+        },
+        (someError) => someError as FileCopyError,
+    )
 
-    moveTo = async (
-        destination: FluentFile | FluentFolder,
-        moveOptions?: MoveOptions,
-    ) => {
-        const destinationPath = await this.#ensureDestination(destination)
-        await move(this.#path, destinationPath, {
-            overwrite: true,
-            ...moveOptions,
-        })
-    }
+    moveTo = ResultAsync.fromThrowable(
+        async (
+            destination: FluentFile | FluentFolder,
+            dereferenceSymlinks?: boolean,
+        ) => {
+            let destinationPath: string | null = null
+            try {
+                destinationPath = await this.#ensureDestination(destination)
+                await move(this.#path, destinationPath, {
+                    overwrite: true,
+                    dereference: dereferenceSymlinks,
+                })
+            } catch (someError) {
+                throw new FileMoveError(this.#path, destinationPath, someError)
+            }
+        },
+        (someError) => someError as FileMoveError,
+    )
 
-    linkTo = async (destination: FluentFile | FluentFolder) => {
-        const destinationPath = await this.#ensureDestination(destination)
-        await ensureLink(this.#path, destinationPath)
-    }
+    linkTo = ResultAsync.fromThrowable(
+        async (destination: FluentFile | FluentFolder) => {
+            let destinationPath: string | null = null
+            try {
+                destinationPath = await this.#ensureDestination(destination)
+                await ensureLink(this.#path, destinationPath)
+            } catch (someError) {
+                throw new FileLinkError(this.#path, destinationPath, someError)
+            }
+        },
+        (someError) => someError as FileLinkError,
+    )
 
-    symlinkTo = async (destination: FluentFile | FluentFolder) => {
-        const destinationPath = await this.#ensureDestination(destination)
-        await ensureSymlink(this.#path, destinationPath)
-    }
+    symlinkTo = ResultAsync.fromThrowable(
+        async (destination: FluentFile | FluentFolder) => {
+            let destinationPath: string | null = null
+            try {
+                destinationPath = await this.#ensureDestination(destination)
+                await ensureSymlink(this.#path, destinationPath)
+            } catch (someError) {
+                throw new FileSymLinkError(
+                    this.#path,
+                    destinationPath,
+                    someError,
+                )
+            }
+        },
+        (someError) => someError as FileSymLinkError,
+    )
 
     remove = ResultAsync.fromThrowable(
         () => remove(this.#path),
-        (someError) => new FileError("remove", this.#path, someError),
+        (someError) => new FileRemoveError(this.#path, someError),
     )
 
     readText = ResultAsync.fromThrowable(
@@ -182,21 +232,21 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             })
             return fileText
         },
-        (someError) => new FileError("read", this.#path, someError),
+        (someError) => new FileReadError(this.#path, someError),
     )
 
     readBuffer = ResultAsync.fromThrowable(
         async (options: Pick<FileReadOptions, "flag" | "signal"> = {}) => {
             return readFile(this.#path, options)
         },
-        (someError) => new FileError("read", this.#path, someError),
+        (someError) => new FileReadError(this.#path, someError),
     )
 
     read = (options: FileReadOptions) =>
         this.readText(options).andThen((fileText) =>
             zparse(fileText, this.#schema, {
+                format: this.#path,
                 ...options,
-                // format: this.#path
             }),
         )
 
@@ -204,14 +254,14 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         async (textContent: string, writeOptions: WriteFileOptions) => {
             await outputFile(this.#path, textContent, writeOptions)
         },
-        (someError) => new FileError("write", this.#path, someError),
+        (someError) => new FileWriteError(this.#path, someError),
     )
 
     writeBuffer = ResultAsync.fromThrowable(
         async (bufferContent: Buffer, writeOptions: WriteFileOptions) => {
             await outputFile(this.#path, bufferContent, writeOptions)
         },
-        (someError) => new FileError("write", this.#path, someError),
+        (someError) => new FileWriteError(this.#path, someError),
     )
 
     write = (
@@ -252,12 +302,15 @@ function parseFilePath(absolutePath: string) {
 }
 
 export function ffile(
-    file: string,
+    file: string | number,
     ...extraPathPieces: Array<string | number>
 ) {
     return new FluentFile(parseString(), file, ...extraPathPieces)
 }
 
-export function homeFile(...pathPieces: Array<string | number>) {
-    return ffile(homedir(), ...pathPieces)
+export function homeFile(
+    file: string | number,
+    ...extraPathPieces: Array<string | number>
+) {
+    return ffile(homedir(), file, ...extraPathPieces)
 }
