@@ -129,7 +129,10 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     }
 
     schema = <NewSchema extends StandardSchemaV1>(newSchema: NewSchema) => {
-        return new FluentFile(newSchema, this.#path)
+        return new FluentFile<
+            StandardSchemaV1.InferInput<NewSchema>,
+            StandardSchemaV1.InferOutput<NewSchema>
+        >(newSchema, this.#path)
     }
 
     get info() {
@@ -259,7 +262,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         (someError) => new FileReadError(this.#path, someError),
     )
 
-    read = (options: FileReadOptions) =>
+    read = (options: FileReadOptions = {}) =>
         this.readText(options).andThen((fileText) =>
             zparse(fileText, this.#schema, {
                 format: this.#path,
@@ -268,7 +271,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         )
 
     writeText = ResultAsync.fromThrowable(
-        async (textContent: string, writeOptions: WriteFileOptions) => {
+        async (textContent: string, writeOptions: WriteFileOptions = {}) => {
             await outputFile(this.#path, textContent, writeOptions)
         },
         (someError) => new FileWriteError(this.#path, someError),
@@ -281,10 +284,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         (someError) => new FileWriteError(this.#path, someError),
     )
 
-    write = (
-        content: Content,
-        options: WriteFileOptions & StringifyOptions,
-    ) => {
+    write = (content: Content, options: FileWriteOptions = {}) => {
         return zstringify(content, this.#schema, options).map(
             async (textContent) => {
                 await this.writeText(textContent, options)
@@ -364,6 +364,16 @@ export type FileReadOptions = Partial<
         flag: FsFlag
         signal: AbortSignal
     } & ParseOptions
+>
+
+export type FileWriteOptions = Partial<
+    {
+        encoding: BufferEncoding
+        mode: number
+        flag: FsFlag
+        flush: boolean
+        signal: AbortSignal
+    } & StringifyOptions
 >
 
 function parseFilePath(absolutePath: string) {
