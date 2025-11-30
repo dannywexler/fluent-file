@@ -9,3 +9,9 @@ export class FolderError extends Error {
         this.name = this.constructor.name
     }
 }
+
+export class FolderGlobError extends FolderError {
+    constructor(path: string, cause?: unknown) {
+        super("glob", path, cause)
+    }
+}

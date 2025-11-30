@@ -1,6 +1,7 @@
 import { constants } from "node:fs"
 import { copyFile, readFile, stat } from "node:fs/promises"
 import { homedir } from "node:os"
+import { inspect } from "node:util"
 
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import type { WriteFileOptions } from "fs-extra/esm"
@@ -71,6 +72,13 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         this.#ext = parsed.ext
         this.#info = parsed
     }
+
+    toString = () => this.path
+
+    // biome-ignore lint/style/useNamingConvention: needs to be this case to print
+    toJSON = () => ({ Folder: this.info });
+
+    [inspect.custom] = () => this.toJSON()
 
     path = () => this.#path
 
