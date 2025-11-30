@@ -1,30 +1,34 @@
-// biome-ignore lint/performance/noBarrelFile: this is the index file
-export { AFile, afile, homeFile, findFiles } from "$/file/any";
-export { JsonFile, jsonFile, findJsonFiles } from "$/file/json";
+export { FluentFile, ffile, homeFile } from "$/file/file"
+// export { AFile, afile, homeFile } from "$/file/any"
+// export {
+//     base2to36,
+//     base36to2,
+//     findImageFiles,
+//     IMAGE_EXTENSIONS,
+//     ImageFile,
+//     imageFile,
+//     PhashSimilarity,
+//     type PhashSimilarityResult,
+//     phashCheck,
+//     type ToAvifOptions,
+// } from "$/file/image"
+// export { findJsonFiles, JsonFile, jsonFile } from "$/file/json"
+// export {
+//     findVideoFiles,
+//     VIDEO_EXTENSIONS,
+//     VideoFile,
+//     videoFile,
+// } from "$/file/video"
+// export {
+//     findYamlFiles,
+//     YAML_EXTENSIONS,
+//     YamlFile,
+//     yamlFile,
+// } from "$/file/yaml"
 export {
-    YamlFile,
-    yamlFile,
-    findYamlFiles,
-    YAML_EXTENSIONS,
-} from "$/file/yaml";
-export {
-    ImageFile,
-    imageFile,
-    findImageFiles,
-    IMAGE_EXTENSIONS,
-    type ToAvifOptions,
-    base2to36,
-    base36to2,
-    phashCheck,
-    type PhashSimilarityResult,
-    PhashSimilarity,
-} from "$/file/image";
-export {
-    VideoFile,
-    videoFile,
-    findVideoFiles,
-    VIDEO_EXTENSIONS,
-} from "$/file/video";
-
-export { Folder, folder, homeFolder, cwd } from "$/folder/folder";
-export { GitFolder } from "$/folder/git";
+    currentFolder,
+    FluentFolder,
+    folder,
+    homeFolder,
+} from "$/folder/folder"
+// export { GitFolder } from "$/folder/git"

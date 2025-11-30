@@ -20,7 +20,7 @@ test:
 all: &ALL
   piped: true
   jobs:
-    # - *LINT
+    - *LINT
     - *BUILD
     # - *TEST
 
