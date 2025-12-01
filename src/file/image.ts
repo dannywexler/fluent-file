@@ -1,7 +1,7 @@
 import type { AvifOptions, ResizeOptions } from "sharp"
 import z from "zod"
 
-import type { FluentFolder } from "$/folder/folder"
+import type { FileOutputOptions } from "$/common/path"
 export const MAX_DIFFERENCES = 6
 
 export const IMAGE_EXTENSIONS = [
@@ -15,12 +15,7 @@ export const IMAGE_EXTENSIONS = [
     "webp",
 ]
 
-export type ImageOutputOptions = {
-    newFolder?: FluentFolder
-    newBaseName?: string
-}
-
-export type ImageResizeOptions = ImageOutputOptions & ResizeOptions
+export type ImageResizeOptions = FileOutputOptions & ResizeOptions
 
 // const op: AvifOptions = {}
 // const rs: ResizeOptions = {background}
@@ -30,7 +25,7 @@ export type ImageResizeOptions = ImageOutputOptions & ResizeOptions
  * @default 4
  */
 
-export type ToAVIFOptions = ImageOutputOptions & ResizeOptions & AvifOptions
+export type ToAVIFOptions = FileOutputOptions & ResizeOptions & AvifOptions
 
 export type PhashSimilarity = "SAME" | "SIMILAR" | "DIFFERENT"
 

@@ -47,24 +47,20 @@ describe("metadata", () => {
     })
 })
 
-// describe("thumbnail", async () => {
-//     const thumbnailFile = imageFile("tests", "video", "bunny.png")
-//     await thumbnailFile.delete()
-//
-//     const label = "created thumbnail"
-//     test(label, async () => {
-//         console.time(label)
-//         const bunnyThumb = await bunnyFile.getThumbnail("50%", thumbnailFile)
-//         console.timeEnd(label)
-//         bunnyThumb.match(
-//             async (destinationFile) => {
-//                 const destinationFileExists = await destinationFile.exists()
-//                 expect(destinationFileExists).toBe(true)
-//             },
-//             (thumbnailError) => {
-//                 console.log(thumbnailError)
-//                 expect(thumbnailError).toBeNull()
-//             },
-//         )
-//     })
-// })
+describe("thumbnail", async () => {
+    const thumbnailFile = videosFolder.file("bunny.png")
+    await thumbnailFile.remove()
+
+    test("created thumbnail", async () => {
+        const bunnyThumb = await bunnyFile.video().extractFrame({ time: 30 })
+        bunnyThumb.match(
+            async (destinationFile) => {
+                const destinationFileExists = await destinationFile.exists()
+                expect(destinationFileExists).toBe(true)
+            },
+            (thumbnailError) => {
+                expect(thumbnailError).toBeNull()
+            },
+        )
+    })
+})

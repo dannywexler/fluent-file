@@ -4,6 +4,7 @@ import { homedir } from "node:os"
 import { inspect } from "node:util"
 
 import type { StandardSchemaV1 } from "@standard-schema/spec"
+import { fcmd } from "fluent-command"
 import type { WriteFileOptions } from "fs-extra/esm"
 import {
     ensureFile,
@@ -21,6 +22,7 @@ import type { ParseOptions, StringifyOptions } from "zerde"
 import { zparse, zstringify } from "zerde"
 
 import type { FsFlag } from "$/common/node"
+import type { FileOutputOptions } from "$/common/path"
 import { normalizeAndResolvePath } from "$/common/path"
 import { parseString } from "$/common/schema"
 import {
@@ -41,6 +43,7 @@ import { FluentFolder } from "$/folder/folder"
 
 import type { ImageResizeOptions, ToAVIFOptions } from "./image"
 import { phashStringSchema } from "./image"
+import type { ExtractFrameOptions } from "./video"
 import { getVideoMetaData } from "./video"
 
 export class FluentFile<Content = string, ParsedContent = Content> {
@@ -66,6 +69,20 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         await targetFile.folder().ensureExists()
         await targetFile.remove()
         return targetFile.path()
+    }
+
+    #prepareTarget = async (
+        options: FileOutputOptions & { newExt?: string },
+    ) => {
+        const {
+            newFolder = this.folder(),
+            newBaseName = this.#basename,
+            newExt = this.#ext,
+        } = options
+        const targetFile = newFolder.file(`${newBaseName}.${newExt}`)
+        await targetFile.remove()
+        await newFolder.ensureExists()
+        return targetFile
     }
 
     constructor(
@@ -286,10 +303,8 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     )
 
     write = (content: Content, options: FileWriteOptions = {}) => {
-        return zstringify(content, this.#schema, options).map(
-            async (textContent) => {
-                await this.writeText(textContent, options)
-            },
+        return zstringify(content, this.#schema, options).andThen(
+            (textContent) => this.writeText(textContent, options),
         )
     }
 
@@ -303,15 +318,10 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
         const resize = ResultAsync.fromThrowable(
             async (resizeOptions: ImageResizeOptions) => {
-                const {
-                    newFolder = this.folder(),
-                    newBaseName = this.#basename,
-                    ...options
-                } = resizeOptions
-                const targetFile = newFolder.file(`${newBaseName}.${this.#ext}`)
-                await targetFile.remove()
-                await newFolder.ensureExists()
-                await sharpInstance.resize(options).toFile(targetFile.path())
+                const targetFile = await this.#prepareTarget(resizeOptions)
+                await sharpInstance
+                    .resize(resizeOptions)
+                    .toFile(targetFile.path())
                 return targetFile
             },
             (someError) => new ImageResizeError(this.#path, someError),
@@ -319,17 +329,13 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
         const toAVIF = ResultAsync.fromThrowable(
             async (toAVIFOptions: ToAVIFOptions = {}) => {
-                const {
-                    newFolder = this.folder(),
-                    newBaseName = this.#basename,
-                    ...options
-                } = toAVIFOptions
-                const targetFile = newFolder.file(`${newBaseName}.avif`)
-                await targetFile.remove()
-                await newFolder.ensureExists()
+                const targetFile = await this.#prepareTarget({
+                    ...toAVIFOptions,
+                    newExt: "avif",
+                })
                 await sharpInstance
-                    .resize(options)
-                    .avif(options)
+                    .resize(toAVIFOptions)
+                    .avif(toAVIFOptions)
                     .toFile(targetFile.path())
                 return targetFile
             },
@@ -360,6 +366,31 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
     video = () => ({
         metadata: () => getVideoMetaData(this.#path),
+        extractFrame: async (extractFrameOptions: ExtractFrameOptions = {}) => {
+            const {
+                time = 1,
+                unit = "s",
+                ext = "png",
+                ...rest
+            } = extractFrameOptions
+            const ss = unit === "s" ? time : `${time}${unit}`
+
+            const targetFile = await this.#prepareTarget({
+                newExt: ext,
+                ...rest,
+            })
+
+            return fcmd("ffmpeg")
+                .opt({
+                    ss,
+                    i: this.#path,
+                    "frames:v": 1,
+                    y: "",
+                })
+                .args(targetFile.path())
+                .read()
+                .map(() => targetFile)
+        },
     })
 }
 

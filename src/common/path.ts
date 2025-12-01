@@ -1,5 +1,7 @@
 import pathe from "pathe"
 
+import type { FluentFolder } from "$/folder/folder"
+
 export function normalizeAndResolvePath(...pathPieces: Array<string | number>) {
     const pieces = pathPieces.map((item) => {
         if (typeof item === "number") {
@@ -20,4 +22,9 @@ export function removeDotFromExtension(extension: string) {
 
 export function getFilePathExtension(filePath: string) {
     return removeDotFromExtension(pathe.extname(filePath))
+}
+
+export type FileOutputOptions = {
+    newFolder?: FluentFolder
+    newBaseName?: string
 }
