@@ -5,5 +5,6 @@ export default defineConfig({
     plugins: [tsconfigPaths()],
     test: {
         includeSource: ['src/**/*.{ts}'],
+        reporters: ['verbose']
     },
 })

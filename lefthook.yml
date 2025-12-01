@@ -15,7 +15,7 @@ test:
   jobs:
     - &TEST
       name: "Test "
-      run: "{nm}vitest run"
+      run: "{nm}vitest run --reporter dot"
 
 all: &ALL
   piped: true

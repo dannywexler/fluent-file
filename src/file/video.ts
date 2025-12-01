@@ -1,31 +1,42 @@
-// import ffmpeg, { type FfprobeData } from "fluent-ffmpeg"
-// import { ResultAsync } from "neverthrow"
-//
-// import type { AnyGlob } from "$/common/glob"
-// import { globFiles } from "$/common/glob"
-// import type { Strings } from "$/common/types"
-// import { zodResult } from "$/common/zod"
-// import { AFile } from "$/file/any"
-// import type { ImageFile } from "$/file/image"
-// import { VideoMetaDataSchema } from "$/file/video.schemas"
-// import type { Folder } from "$/folder/folder"
-// import { folder } from "$/folder/folder"
-//
-// import { VideoMetaDataError, VideoThumbNailError } from "./video.errors"
-//
-// export const VIDEO_EXTENSIONS = [
-//     "avi",
-//     "flv",
-//     "mkv",
-//     "mov",
-//     "mp4",
-//     "mpeg",
-//     "mpg",
-//     "rm",
-//     "rmvb",
-//     "webm",
-//     "wmv",
-// ]
+import { fcmd } from "fluent-command"
+import { zparse } from "zerde"
+
+import { videoMetaDataSchema } from "./video.schemas"
+
+export const VIDEO_EXTENSIONS = [
+    "avi",
+    "flv",
+    "mkv",
+    "mov",
+    "mp4",
+    "mpeg",
+    "mpg",
+    "rm",
+    "rmvb",
+    "webm",
+    "wmv",
+]
+
+export function getVideoMetaData(path: string) {
+    return fcmd("ffprobe")
+        .opt({
+            v: "error",
+            // biome-ignore lint/style/useNamingConvention: option is snake case
+            hide_banner: "",
+            // biome-ignore lint/style/useNamingConvention: option is snake case
+            print_format: "json",
+            // biome-ignore lint/style/useNamingConvention: option is snake case
+            show_format: "",
+            // biome-ignore lint/style/useNamingConvention: option is snake case
+            show_streams: "",
+        })
+        .args(path)
+        .read()
+        .andThen((commandSuccess) =>
+            zparse(commandSuccess.stdout, videoMetaDataSchema, "json"),
+        )
+}
+
 //
 // const ffProbePromise = (filePath: string) =>
 //     new Promise<FfprobeData>((resolve, reject) =>

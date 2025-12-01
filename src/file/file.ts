@@ -41,6 +41,7 @@ import { FluentFolder } from "$/folder/folder"
 
 import type { ImageResizeOptions, ToAVIFOptions } from "./image"
 import { phashStringSchema } from "./image"
+import { getVideoMetaData } from "./video"
 
 export class FluentFile<Content = string, ParsedContent = Content> {
     #path: string
@@ -356,6 +357,10 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             phash,
         }
     }
+
+    video = () => ({
+        metadata: () => getVideoMetaData(this.#path),
+    })
 }
 
 export type FileReadOptions = Partial<
