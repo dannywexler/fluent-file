@@ -1,68 +1,85 @@
 # Fluent File
 A fluent TypeScript library for working with files and folders
 
-## Folder
-Provides folder fields:
+## FluentFolder
+
+### Fields:
 - `path`: the absolute path to this folder (`/tmp/example/someFolder`)
 - `name`: the last piece of the absolute path (`someFolder`)
-- `parentName`: the 2nd to last piece of the absolute path (`example`)
-- `parentPath`: the absolute path to the parent of this folder (`/tmp/example`)
+- `info`: an object with both `path` and `name`
 
-Provides folder methods:
-- exists()
-- ensureExists()
-- ensureEmpty()
-- delete()
-
-## AFile
-Provides fields for any kind of file:
-- `path`: the absolute path to this file (`/tmp/example/someFolder/someFile.txt`)
-- `name`: the name of the file **without** the extension (`someFile`)
-- `fullName`: the name of the file **with** the extension (`someFile.txt`)
-- `ext`: the file extension **without** the leading dot. (`txt`)
-- `parentName`: the 2nd to last piece of the absolute path to this file  (`someFolder`)
-- `parentPath`: the absolute path to the parent of this file (`/tmp/example/someFolder`)
-
-Provides file methods for any kind of file:
-- `getParentFolder()` returns the [Folder](#folder) instance this file is in
-- `getStats()` calls node:fs/promises.stat()
+### Methods:
+- `stats()`
 - `exists()`
 - `ensureExists()`
+- `ensureEmpty()`
+- `remove()`
+- `findFolders()`
+- `findFiles()`
+
+### Transform methods:
+- `file()`: create `FluentFile` by resolving the path from this `FluentFolder`
+- `folder()`: create `FluentFolder` by resolving the path from this `FluentFolder`
+
+
+## FluentFile
+
+### Fields:
+- `path`: the absolute path to this file (`/tmp/example/someFolder/someFile.txt`)
+- `folderPath`: the absolute path to the folder this file is in (`/tmp/example/someFolder`)
+- `info`: an object with `absolutePath`, `folderPath`, `name`, `basename` and `ext`
+
+### Getters/setters (call without arg to get, call with arg to set):
+- `name`: the name of the file **with** the extension (`someFile.txt`)
+- `basename`: the name of the file **without** the extension (`someFile`)
+- `ext`: the file extension **without** the leading dot. (`txt`)
+
+### Schema methods:
+- `schema()`: create new `FluentFile` instance with a [Standard Schema](https://standardschema.dev)
+
+### Info methods:
+- `stats()` calls `node:fs/promises.stat()`
+- `exists()`
+- `ensureExists()`
+
+### Move/remove methods:
 - `copyTo()`
 - `moveTo()`
 - `linkTo()`
 - `symlinkTo()`
-- `delete()`
+- `remove()`
+
+### Read methods:
 - `readText()`
-- `readTextLines()`
+- `readBuffer()`
+- `read()`: makes use of this file's `schema` to parse then validate the file contents
+- `createReadStream()`
+
+### Write methods:
+- `append()`
 - `writeText()`
+- `writeBuffer()`
+- `write()`: makes use of this file's `schema` to validate then stringify the file contents
+- `createWriteStream()`
 
-## JsonFile
-Extends [AFile](#afile)
-- the `constructor()` takes a [zod](https://zod.dev) schema
-- adds a `read()` method that reads the file as text, JSON parses it, then validates it using the zod schema
-- adds a `write(contents)` method that validates the contents using the zod schema, JSON stringifies it, then writes the text
+### Image methods:
 
-## YamlFile
-Extends [JsonFile](#jsonfile)
-- overrides `read()` to use `YAML.parse` instead of `JSON.parse`, but still validates using the zod schema
-- overrides `write(contents)` to use `YAML.stringify` instead of `JSON.stringify`, but still validates using the zod schema
+Uses [sharp](https://github.com/lovell/sharp) library
 
-## ImageFile
-Extends [AFile](#afile)
-- adds a [sharp](https://github.com/lovell/sharp) property
-- adds a `convertToAvif()` method
-- adds a `getPhash()` method using [sharp-phash](https://www.npmjs.com/package/sharp-phash) to create a [perceptual hash](https://en.wikipedia.org/wiki/Perceptual_hashing) of the image
+- `metadata()`
+- `resize()`
+- `toAVIF()`
+- `phash()`: uses [sharp-phash](https://www.npmjs.com/package/sharp-phash) to create a [perceptual hash](https://en.wikipedia.org/wiki/Perceptual_hashing) of the image
+- plus all other `sharp` methods
 
-## VideoFile
-Extends [AFile](#afile)
-- adds a [ffmpeg](http://www.ffmpeg.org/) property, provided by [fluent-ffmpeg](https://www.npmjs.com/package/fluent-ffmpeg)
-- adds a `getMetaData()` method
-- adds a `getThumbnail()` method
+### Video methods:
 
-## GitFolder
-Extends [Folder](#folder)
-- the `constructor()` takes the git owner, repo, and baseUrl (defaults to "https://github.com")
-- adds a [git](https://git-scm.com/) property, provided by [simple-git](https://www.npmjs.com/package/simple-git)
-- adds a `clone()` method, using the owner, repo and baseUrl provided in the constructor
-- adds a `pull()` method, that will clone the repo if it does not already exist
+Uses [ffmpeg](https://www.ffmpeg.org/) commands
+
+- `metadata()`: using [ffprobe](https://ffmpeg.org/ffprobe.html)
+- `extractFrame()`
+
+### Transform methods:
+- `file()`: create `FluentFile` by resolving the path from this `FluentFile`
+- `folder()`: create `FluentFolder` by resolving the path from this `FluentFile`
+

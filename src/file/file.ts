@@ -285,20 +285,14 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     )
 
     readText = ResultAsync.fromThrowable(
-        async (options: FileReadOptions = {}) => {
-            const fileText = await readFile(this.#path, {
-                encoding: "utf8",
-                ...options,
-            })
-            return fileText
-        },
+        (options: FileReadOptions = {}) =>
+            readFile(this.#path, { encoding: "utf8", ...options }),
         (someError) => new FileReadError(this.#path, someError),
     )
 
     readBuffer = ResultAsync.fromThrowable(
-        async (options: Pick<FileReadOptions, "flag" | "signal"> = {}) => {
-            return readFile(this.#path, options)
-        },
+        (options: Pick<FileReadOptions, "flag" | "signal"> = {}) =>
+            readFile(this.#path, options),
         (someError) => new FileReadError(this.#path, someError),
     )
 
@@ -315,33 +309,29 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     ) => createReadStream(this.#path, readStreamOptions)
 
     writeText = ResultAsync.fromThrowable(
-        async (textContent: string, writeOptions: WriteFileOptions = {}) => {
-            await outputFile(this.#path, textContent, writeOptions)
-        },
+        (textContent: string, writeOptions: WriteFileOptions = {}) =>
+            outputFile(this.#path, textContent, writeOptions),
         (someError) => new FileWriteError(this.#path, someError),
     )
 
     writeBuffer = ResultAsync.fromThrowable(
-        async (bufferContent: Buffer, writeOptions: WriteFileOptions = {}) => {
-            await outputFile(this.#path, bufferContent, writeOptions)
-        },
+        (bufferContent: Buffer, writeOptions: WriteFileOptions = {}) =>
+            outputFile(this.#path, bufferContent, writeOptions),
         (someError) => new FileWriteError(this.#path, someError),
     )
 
-    write = (content: Content, options: FileWriteOptions = {}) => {
-        return zstringify(content, this.#schema, options).andThen(
-            (textContent) => this.writeText(textContent, options),
+    write = (content: Content, options: FileWriteOptions = {}) =>
+        zstringify(content, this.#schema, options).andThen((textContent) =>
+            this.writeText(textContent, options),
         )
-    }
 
     createWriteStream = (
         writeStreamOptions?: Parameters<typeof createWriteStream>[1],
     ) => createWriteStream(this.#path, writeStreamOptions)
 
     append = ResultAsync.fromThrowable(
-        async (data: string | Buffer, writeOptions: WriteFileOptions = {}) => {
-            await appendFile(this.#path, data, writeOptions)
-        },
+        (data: string | Buffer, writeOptions: WriteFileOptions = {}) =>
+            appendFile(this.#path, data, writeOptions),
         (someError) => new FileAppendError(this.#path, someError),
     )
 

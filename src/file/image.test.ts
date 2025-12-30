@@ -1,5 +1,4 @@
-import dl from "download"
-import { assert, beforeAll, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
 import { expectResult } from "$/common/testing"
 import { folder } from "$/folder/folder"
@@ -16,17 +15,16 @@ const boatJPG = imagesFolder.file("boat.jpg")
 const boatAVIF = imagesFolder.file("boat.avif")
 const boatSmallAVIF = imagesFolder.file("boat_small.avif")
 
-beforeAll(async () => {
+test("exists", async () => {
     await imagesFolder.ensureExists()
     if (await boatJPG.exists()) {
+        expect(true).toEqual(true)
         // console.log(boatJPG.name(), "already exists => skipping download")
     } else {
         // biome-ignore lint/suspicious/noConsole: want to know if downloading
         console.log(boatJPG.name(), "does not exist => downloading")
-        await dl(boatUrl, imagesFolder.path, {
-            filename: boatJPG.name(),
-        })
-        assert(await boatJPG.exists())
+        const dlResult = await expectResult(boatJPG.download(boatUrl))
+        expect(dlResult).toEqual("SUCCESS")
         // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
         console.log(boatJPG.name(), "downloaded successfully")
     }
