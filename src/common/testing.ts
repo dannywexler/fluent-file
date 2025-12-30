@@ -1,8 +1,8 @@
-import type { ResultAsync } from "neverthrow"
+import type { Result, ResultAsync } from "neverthrow"
 import { expect } from "vitest"
 
 export async function expectResult<T, E = unknown>(
-    asyncResult: ResultAsync<T, E>,
+    asyncResult: ResultAsync<T, E> | Promise<Result<T, E>>,
     message = "Should not have an error",
 ) {
     const res = await asyncResult

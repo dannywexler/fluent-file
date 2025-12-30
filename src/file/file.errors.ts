@@ -2,6 +2,11 @@ export type FileOperation =
     | "Append"
     | "Chmod"
     | "Copy"
+    | "Download"
+    | "ImageConvert"
+    | "ImageMetadata"
+    | "ImagePhash"
+    | "ImageResize"
     | "Link"
     | "Move"
     | "Read"
@@ -9,10 +14,6 @@ export type FileOperation =
     | "Stat"
     | "SymLink"
     | "Write"
-    | "ImageMetadata"
-    | "ImageResize"
-    | "ImageConvert"
-    | "ImagePhash"
 
 const FILE_INDEX = 4
 const ERROR_INDEX = -5
@@ -33,25 +34,25 @@ abstract class FileError extends Error {
     }
 }
 
-export class FileStatError extends FileError {}
-
-export class FileChmodError extends FileError {}
-
-export class FileReadError extends FileError {}
-
-export class FileWriteError extends FileError {}
+export class FileDownloadError extends FileError {
+    readonly url: string
+    constructor(path: string, url: string, cause: unknown) {
+        super(path, cause)
+        this.url = url
+        this.message = `Error trying to download url: ${url} to file: ${path}`
+    }
+}
 
 export class FileAppendError extends FileError {}
-
-export class FileRemoveError extends FileError {}
-
-export class FileImageMetadataError extends FileError {}
-
-export class FileImageResizeError extends FileError {}
-
+export class FileChmodError extends FileError {}
 export class FileImageConvertError extends FileError {}
-
+export class FileImageMetadataError extends FileError {}
 export class FileImagePhashError extends FileError {}
+export class FileImageResizeError extends FileError {}
+export class FileReadError extends FileError {}
+export class FileRemoveError extends FileError {}
+export class FileStatError extends FileError {}
+export class FileWriteError extends FileError {}
 
 export const DESTINATION_FALLBACK = "DESTINATION_FALLBACK"
 

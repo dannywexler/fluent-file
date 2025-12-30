@@ -1,6 +1,6 @@
-import dl from "download"
-import { beforeAll, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
+import { expectResult } from "$/common/testing"
 import { folder } from "$/folder/folder"
 
 const bunnyUrl =
@@ -19,31 +19,25 @@ const bunnyMetaData = {
     videoStream: { height: 720, width: 1280 },
 }
 
-beforeAll(async () => {
+test("exists", async () => {
     await bunnyFile.folder().ensureExists()
     if (await bunnyFile.exists()) {
+        expect(true).toEqual(true)
         // console.log(filename, "already exists => skipping download")
     } else {
         // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
         console.log(filename, "does not exist => downloading")
-        await dl(bunnyUrl, videosFolder.path, { filename })
+        const dlResult = await expectResult(bunnyFile.download(bunnyUrl))
+        expect(dlResult).toEqual("SUCCESS")
+        // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
+        console.log(filename, "downloaded")
     }
 })
 
 describe("metadata", () => {
     test("Got valid metadata", async () => {
-        const metadataResult = await bunnyFile.video().metadata()
-        metadataResult.match(
-            (validMetaData) => {
-                // console.log(validMetaData)
-                // expect(validMetaData).toEqual(expectedMetaData)
-                expect(validMetaData).toMatchObject(bunnyMetaData)
-            },
-            (metaDataError) => {
-                // console.log(metaDataError);
-                expect(metaDataError).toBeNull()
-            },
-        )
+        const foundMetadata = await expectResult(bunnyFile.video().metadata())
+        expect(foundMetadata).toMatchObject(bunnyMetaData)
     })
 })
 
@@ -52,15 +46,10 @@ describe("thumbnail", async () => {
     await thumbnailFile.remove()
 
     test("created thumbnail", async () => {
-        const bunnyThumb = await bunnyFile.video().extractFrame({ time: 30 })
-        bunnyThumb.match(
-            async (destinationFile) => {
-                const destinationFileExists = await destinationFile.exists()
-                expect(destinationFileExists).toBe(true)
-            },
-            (thumbnailError) => {
-                expect(thumbnailError).toBeNull()
-            },
+        const bunnyThumb = await expectResult(
+            bunnyFile.video().extractFrame({ time: 30 }),
         )
+        const destinationFileExists = await bunnyThumb.exists()
+        expect(destinationFileExists).toBe(true)
     })
 })

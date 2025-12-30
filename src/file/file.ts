@@ -48,6 +48,9 @@ import { getVideoMetaData } from "$/file/video"
 import { FluentFolder } from "$/folder/folder"
 import { currentFolder } from "$/folder/xdg"
 
+import type { DownloadFileOptions } from "./download"
+import { downloadAFile } from "./download"
+
 export class FluentFile<Content = string, ParsedContent = Content> {
     #path: string
     #folderPath: string
@@ -336,8 +339,8 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     ) => createWriteStream(this.#path, writeStreamOptions)
 
     append = ResultAsync.fromThrowable(
-        async (textContent: string, writeOptions: WriteFileOptions = {}) => {
-            await appendFile(this.#path, textContent, writeOptions)
+        async (data: string | Buffer, writeOptions: WriteFileOptions = {}) => {
+            await appendFile(this.#path, data, writeOptions)
         },
         (someError) => new FileAppendError(this.#path, someError),
     )
@@ -415,6 +418,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             })
 
             return fcmd("ffmpeg")
+                .opt("hide_banner")
                 .opt({
                     ss,
                     i: this.#path,
@@ -426,6 +430,9 @@ export class FluentFile<Content = string, ParsedContent = Content> {
                 .map(() => targetFile)
         },
     })
+
+    download = (url: string, downloadOptions: DownloadFileOptions = {}) =>
+        downloadAFile(url, this, downloadOptions)
 }
 
 export type FileReadOptions = ParseOptions &
