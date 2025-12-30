@@ -17,14 +17,6 @@ export const IMAGE_EXTENSIONS = [
 
 export type ImageResizeOptions = FileOutputOptions & ResizeOptions
 
-// const op: AvifOptions = {}
-// const rs: ResizeOptions = {background}
-/**
- * Level of CPU effort to reduce the file size.
- * Between 0 (fastest) and 9 (slowest)
- * @default 4
- */
-
 export type ToAVIFOptions = FileOutputOptions & ResizeOptions & AvifOptions
 
 export type PhashSimilarity = "SAME" | "SIMILAR" | "DIFFERENT"

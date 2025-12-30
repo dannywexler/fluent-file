@@ -1,10 +1,11 @@
-import { constants } from "node:fs"
-import { copyFile, readFile, stat } from "node:fs/promises"
+import { constants, createReadStream, createWriteStream } from "node:fs"
+import { chmod, copyFile, readFile, stat } from "node:fs/promises"
 import { homedir } from "node:os"
 import { inspect } from "node:util"
 
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import { fcmd } from "fluent-command"
+import { appendFile } from "fs-extra"
 import type { WriteFileOptions } from "fs-extra/esm"
 import {
     ensureFile,
@@ -19,13 +20,14 @@ import pathe from "pathe"
 import sharpLib, { type SharpOptions } from "sharp"
 import sharpPhash from "sharp-phash"
 import type { ParseOptions, StringifyOptions } from "zerde"
-import { zparse, zstringify } from "zerde"
+import { parseString, zparse, zstringify } from "zerde"
 
 import type { FsFlag } from "$/common/node"
-import type { FileOutputOptions } from "$/common/path"
+import type { FileOutputOptions, PathPieces } from "$/common/path"
 import { normalizeAndResolvePath } from "$/common/path"
-import { parseString } from "$/common/schema"
 import {
+    FileAppendError,
+    FileChmodError,
     FileCopyError,
     FileLinkError,
     FileMoveError,
@@ -39,12 +41,12 @@ import {
     ImagePhashError,
     ImageResizeError,
 } from "$/file/file.errors"
+import type { ImageResizeOptions, ToAVIFOptions } from "$/file/image"
+import { phashStringSchema } from "$/file/image"
+import type { ExtractFrameOptions } from "$/file/video"
+import { getVideoMetaData } from "$/file/video"
 import { FluentFolder } from "$/folder/folder"
-
-import type { ImageResizeOptions, ToAVIFOptions } from "./image"
-import { phashStringSchema } from "./image"
-import type { ExtractFrameOptions } from "./video"
-import { getVideoMetaData } from "./video"
+import { currentFolder } from "$/folder/xdg"
 
 export class FluentFile<Content = string, ParsedContent = Content> {
     #path: string
@@ -88,7 +90,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     constructor(
         schema: StandardSchemaV1<Content, ParsedContent>,
         file: string | number,
-        ...pathPieces: Array<string | number>
+        ...pathPieces: PathPieces
     ) {
         this.#path = normalizeAndResolvePath(file, ...pathPieces)
         this.#schema = schema
@@ -100,7 +102,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         this.#info = parsed
     }
 
-    toString = () => this.path
+    toString = () => this.#path
 
     // biome-ignore lint/style/useNamingConvention: needs to be this case to print
     toJSON = () => ({ FluentFile: this.info });
@@ -157,7 +159,18 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         return this.#info
     }
 
-    file = (file: string, ...extraPathPieces: Array<string | number>) => {
+    relativePath = (relativeTo = currentFolder()) => {
+        let relative = this.#path
+        if (relative.startsWith(relativeTo.path)) {
+            relative = relative.slice(relativeTo.path.length)
+            if (relative.startsWith("/")) {
+                return relative.slice(1)
+            }
+        }
+        return relative
+    }
+
+    file = (file: string, ...extraPathPieces: PathPieces) => {
         return new FluentFile(
             this.#schema,
             this.#folderPath,
@@ -166,18 +179,17 @@ export class FluentFile<Content = string, ParsedContent = Content> {
         )
     }
 
-    folder = (...extraPathPieces: Array<string | number>) => {
+    folder = (...extraPathPieces: PathPieces) => {
         return new FluentFolder(this.#folderPath, ...extraPathPieces)
     }
 
     stats = ResultAsync.fromThrowable(
         async () => {
             const stats = await stat(this.#path)
-            if (stats.isFile()) {
-                return stats
-            } else {
+            if (!stats.isFile()) {
                 throw new FileStatError(this.#path, "FileWasNotFile")
             }
+            return stats
         },
         (someError) => {
             if (someError instanceof FileStatError) {
@@ -190,6 +202,13 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     exists = async () => (await this.stats()).isOk()
 
     ensureExists = () => ensureFile(this.#path)
+
+    chmod = ResultAsync.fromThrowable(
+        async (mode: string | number) => {
+            await chmod(this.#path, mode)
+        },
+        (someError) => new FileChmodError(this.#path, someError),
+    )
 
     copyTo = ResultAsync.fromThrowable(
         async (destination: FluentFile | FluentFolder) => {
@@ -288,6 +307,10 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             }),
         )
 
+    createReadStream = (
+        readStreamOptions?: Parameters<typeof createReadStream>[1],
+    ) => createReadStream(this.#path, readStreamOptions)
+
     writeText = ResultAsync.fromThrowable(
         async (textContent: string, writeOptions: WriteFileOptions = {}) => {
             await outputFile(this.#path, textContent, writeOptions)
@@ -296,7 +319,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     )
 
     writeBuffer = ResultAsync.fromThrowable(
-        async (bufferContent: Buffer, writeOptions: WriteFileOptions) => {
+        async (bufferContent: Buffer, writeOptions: WriteFileOptions = {}) => {
             await outputFile(this.#path, bufferContent, writeOptions)
         },
         (someError) => new FileWriteError(this.#path, someError),
@@ -307,6 +330,17 @@ export class FluentFile<Content = string, ParsedContent = Content> {
             (textContent) => this.writeText(textContent, options),
         )
     }
+
+    createWriteStream = (
+        writeStreamOptions?: Parameters<typeof createWriteStream>[1],
+    ) => createWriteStream(this.#path, writeStreamOptions)
+
+    append = ResultAsync.fromThrowable(
+        async (textContent: string, writeOptions: WriteFileOptions = {}) => {
+            await appendFile(this.#path, textContent, writeOptions)
+        },
+        (someError) => new FileAppendError(this.#path, someError),
+    )
 
     image = (sharpOptions: SharpOptions = {}) => {
         const sharpInstance = sharpLib(this.#path, sharpOptions)
@@ -394,23 +428,21 @@ export class FluentFile<Content = string, ParsedContent = Content> {
     })
 }
 
-export type FileReadOptions = Partial<
-    {
+export type FileReadOptions = ParseOptions &
+    Partial<{
         encoding: BufferEncoding
         flag: FsFlag
         signal: AbortSignal
-    } & ParseOptions
->
+    }>
 
-export type FileWriteOptions = Partial<
-    {
+export type FileWriteOptions = StringifyOptions &
+    Partial<{
         encoding: BufferEncoding
         mode: number
         flag: FsFlag
         flush: boolean
         signal: AbortSignal
-    } & StringifyOptions
->
+    }>
 
 function parseFilePath(absolutePath: string) {
     const name = pathe.basename(absolutePath)
@@ -430,15 +462,15 @@ function parseFilePath(absolutePath: string) {
 }
 
 export function ffile(
-    file: string | number,
-    ...extraPathPieces: Array<string | number>
+    file: PathPieces[number],
+    ...extraPathPieces: PathPieces
 ) {
     return new FluentFile(parseString(), file, ...extraPathPieces)
 }
 
 export function homeFile(
-    file: string | number,
-    ...extraPathPieces: Array<string | number>
+    file: PathPieces[number],
+    ...extraPathPieces: PathPieces
 ) {
     return ffile(homedir(), file, ...extraPathPieces)
 }

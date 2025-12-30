@@ -1,6 +1,7 @@
 import dl from "download"
 import { assert, beforeAll, describe, expect, test } from "vitest"
 
+import { expectResult } from "$/common/testing"
 import { folder } from "$/folder/folder"
 
 import type { PhashString } from "./image"
@@ -54,31 +55,23 @@ describe(boatJPG.name(), () => {
     const originalHeight = 3066
     const originalWidth = 5451
     test("metadata has expected height and width", async () => {
-        const result = await boatJPG.image().metadata()
-        assert(result.isOk())
-
-        expect(result.value.height).toBe(originalHeight)
-        expect(result.value.width).toBe(originalWidth)
+        const meta = await expectResult(boatJPG.image().metadata())
+        expect(meta.height).toBe(originalHeight)
+        expect(meta.width).toBe(originalWidth)
     })
 
     test(
         "convert to avif",
         async () => {
-            const removeResult = await boatAVIF.remove()
-            assert(removeResult.isOk())
-            const toavifResult = await boatJPG.image().toAVIF({ effort })
-            assert(toavifResult.isOk())
-            const returnedavifImg = toavifResult.value
-            const returnedavifImgMetadataResult = await returnedavifImg
-                .image()
-                .metadata()
-            assert(returnedavifImgMetadataResult.isOk())
-            expect(returnedavifImgMetadataResult.value.height).toBe(
-                originalHeight,
+            await expectResult(boatAVIF.remove())
+            const returnedavifImg = await expectResult(
+                boatJPG.image().toAVIF({ effort }),
             )
-            expect(returnedavifImgMetadataResult.value.width).toBe(
-                originalWidth,
+            const returnedavifImgMetadata = await expectResult(
+                returnedavifImg.image().metadata(),
             )
+            expect(returnedavifImgMetadata.height).toEqual(originalHeight)
+            expect(returnedavifImgMetadata.width).toEqual(originalWidth)
             expect(returnedavifImg.ext()).toEqual("avif")
         },
         timeout,
@@ -89,18 +82,18 @@ describe(boatJPG.name(), () => {
     test(
         "convert to avif and shrink",
         async () => {
-            assert((await boatSmallAVIF.remove()).isOk())
-            const smallImgResult = await boatJPG.image().toAVIF({
-                // height: newHeight,
-                width: newWidth,
-                newBaseName: "boat_small",
-                effort,
-            })
-            assert(smallImgResult.isOk())
-            const smallerImg = smallImgResult.value
-            const smallerImgMetaResult = await smallerImg.image().metadata()
-            assert(smallerImgMetaResult.isOk())
-            const smallerImgMeta = smallerImgMetaResult.value
+            await expectResult(boatSmallAVIF.remove())
+            const smallerImg = await expectResult(
+                boatJPG.image().toAVIF({
+                    // height: newHeight,
+                    width: newWidth,
+                    newBaseName: "boat_small",
+                    effort,
+                }),
+            )
+            const smallerImgMeta = await expectResult(
+                smallerImg.image().metadata(),
+            )
             expect(smallerImgMeta.height).toEqual(newHeight)
             expect(smallerImgMeta.width).toEqual(newWidth)
         },
@@ -108,15 +101,12 @@ describe(boatJPG.name(), () => {
     )
 
     test("phash of jpg equals original", async () => {
-        const result = await boatJPG.image().phash()
-        assert(result.isOk())
-        expect(result.value).toEqual(ogphash)
+        const jpgPhash = await expectResult(boatJPG.image().phash())
+        expect(jpgPhash).toEqual(ogphash)
     })
 
     test("phash of avif equals jpg", async () => {
-        const result = await boatAVIF.image().phash()
-        assert(result.isOk())
-        const avifphash = result.value
+        const avifphash = await expectResult(boatAVIF.image().phash())
         expect(ogphash).toEqual(avifphash)
         const { level, diff } = comparePhashes(ogphash, avifphash)
         expect(level).toEqual("SAME")
@@ -125,9 +115,7 @@ describe(boatJPG.name(), () => {
     })
 
     test("phash of avif_small equals jpg", async () => {
-        const result = await boatSmallAVIF.image().phash()
-        assert(result.isOk())
-        const avifsmallphash = result.value
+        const avifsmallphash = await expectResult(boatSmallAVIF.image().phash())
         expect(ogphash).toEqual(avifsmallphash)
         const { level, diff } = comparePhashes(ogphash, avifsmallphash)
         expect(level).toEqual("SAME")

@@ -1,30 +1,30 @@
 import { opendir, stat } from "node:fs/promises"
-import { homedir } from "node:os"
 import { inspect } from "node:util"
 
 import { emptyDir, ensureDir, remove } from "fs-extra/esm"
 import { ResultAsync } from "neverthrow"
-import pathe, { basename, resolve } from "pathe"
+import pathe, { basename } from "pathe"
 import picomatch from "picomatch"
 
 import type {
     FindFilesGlobOptions,
     FindFoldersGlobOptions,
 } from "$/common/glob"
+import type { PathPieces } from "$/common/path"
 import {
     getFilePathExtension,
     normalizeAndResolvePath,
     removeDotFromExtension,
 } from "$/common/path"
 import { ffile } from "$/file/file"
-
-import { FolderError, FolderGlobError } from "./folder.errors"
+import { FolderError, FolderGlobError } from "$/folder/folder.errors"
+import { currentFolder } from "$/folder/xdg"
 
 export class FluentFolder {
     readonly path: string
     readonly name: string
 
-    constructor(...pathPieces: Array<string | number>) {
+    constructor(...pathPieces: PathPieces) {
         this.path = normalizeAndResolvePath(...pathPieces)
         this.name = basename(this.path)
         if (!this.name) {
@@ -39,16 +39,20 @@ export class FluentFolder {
         }
     }
 
-    folder = (...pathPieces: Array<string>) => folder(this.path, ...pathPieces)
+    folder = (...pathPieces: PathPieces) => folder(this.path, ...pathPieces)
 
-    file = (file: string, ...extraPathPieces: Array<string>) =>
+    file = (file: string, ...extraPathPieces: PathPieces) =>
         ffile(this.path, file, ...extraPathPieces)
 
     relativePath = (relativeTo = currentFolder()) => {
-        if (this.path.startsWith(relativeTo)) {
-            return this.path.slice(relativeTo.length + 1)
+        let relative = this.path
+        if (relative.startsWith(relativeTo.path)) {
+            relative = relative.slice(relativeTo.path.length)
+            if (relative.startsWith("/")) {
+                return relative.slice(1)
+            }
         }
-        return this.path
+        return relative
     }
 
     toString = () => this.path
@@ -61,11 +65,10 @@ export class FluentFolder {
     stats = ResultAsync.fromThrowable(
         async () => {
             const stats = await stat(this.path)
-            if (stats.isDirectory()) {
-                return stats
-            } else {
+            if (!stats.isDirectory()) {
                 throw new FolderError("stat", this.path, "FolderWasNotFolder")
             }
+            return stats
         },
         (someError) => {
             if (someError instanceof FolderError) {
@@ -152,18 +155,6 @@ export class FluentFolder {
     )
 }
 
-export function folder(
-    ...pathPieces: ConstructorParameters<typeof FluentFolder>
-) {
+export function folder(...pathPieces: PathPieces) {
     return new FluentFolder(...pathPieces)
-}
-
-export function homeFolder(
-    ...pathPieces: ConstructorParameters<typeof FluentFolder>
-) {
-    return folder(homedir(), ...pathPieces)
-}
-
-export function currentFolder() {
-    return resolve(process.cwd())
 }

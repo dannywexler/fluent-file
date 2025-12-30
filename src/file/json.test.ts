@@ -1,6 +1,7 @@
-import { assert, expect, test } from "vitest"
+import { expect, test } from "vitest"
 import { z } from "zod"
 
+import { expectResult } from "$/common/testing"
 import { ffile } from "$/file/file"
 
 test("hello.json", async () => {
@@ -17,17 +18,13 @@ test("hello.json", async () => {
     }
     const helloFile = ffile("tests", "json", "hello.json").schema(helloSchema)
 
-    const writeResult = await helloFile.write(initial)
-    assert(writeResult.isOk())
-    const readResult = await helloFile.read()
-    assert(readResult.isOk())
-    expect(readResult.value).toEqual(initial)
+    await expectResult(helloFile.write(initial))
+    const readContents = await expectResult(helloFile.read())
+    expect(readContents).toEqual(initial)
 
-    const changedWriteResult = await helloFile.write(changed)
-    assert(changedWriteResult.isOk())
-    const changedReadResult = await helloFile.read()
-    assert(changedReadResult.isOk())
-    expect(changedReadResult.value).toEqual(changed)
+    await expectResult(helloFile.write(changed))
+    const changedValue = await expectResult(helloFile.read())
+    expect(changedValue).toEqual(changed)
 
     await helloFile.write(initial)
 })

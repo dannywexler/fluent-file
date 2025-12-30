@@ -1,6 +1,9 @@
 import { assert, describe, expect, test } from "vitest"
 
+import { expectResult } from "$/common/testing"
 import { FluentFolder, folder } from "$/folder/folder"
+
+import { homeFolder } from "./xdg"
 
 describe("Construction variations", () => {
     test("cwd", () => {
@@ -37,22 +40,32 @@ describe("parent - child - parent", () => {
     })
 })
 
+describe("XDG Entries", () => {
+    test("HOME", () => {
+        const helper = homeFolder()
+        const tilde = folder("~")
+        const envVar = folder("$HOME")
+        expect(helper.info).toEqual(tilde.info)
+        expect(tilde.info).toEqual(envVar.info)
+    })
+})
+
 describe("findFolders", () => {
     test("valid folder results", async () => {
         const parent = folder("src")
-        const result = await parent.findFolders()
-        assert(result.isOk())
-        expect(result.value.length).toBeGreaterThan(0)
-        for (const item of result.value) {
+        const foundFolders = await expectResult(parent.findFolders())
+        expect(foundFolders.length).toBeGreaterThan(0)
+        for (const item of foundFolders) {
             assert(item instanceof FluentFolder)
         }
     })
 
     test("folder empty results", async () => {
         const parent = folder("src")
-        const result = await parent.findFolders({ glob: "zebra" })
-        assert(result.isOk())
-        expect(result.value.length).toEqual(0)
+        const foundFolders = await expectResult(
+            parent.findFolders({ glob: "zebra" }),
+        )
+        expect(foundFolders.length).toEqual(0)
     })
 })
 
@@ -60,28 +73,31 @@ describe("findFiles", () => {
     const validExt = "ts"
     test("find with glob", async () => {
         const parent = folder("src")
-        const result = await parent.findFiles({ glob: "**/*.ts" })
-        assert(result.isOk())
-        expect(result.value.length).toBeGreaterThan(0)
-        for (const item of result.value) {
+        const foundFiles = await expectResult(
+            parent.findFiles({ glob: `**/*.${validExt}` }),
+        )
+        expect(foundFiles.length).toBeGreaterThan(0)
+        for (const item of foundFiles) {
             assert(item.ext() === validExt)
         }
     })
 
     test("find with exts", async () => {
         const parent = folder("src")
-        const result = await parent.findFiles({ exts: [validExt] })
-        assert(result.isOk())
-        expect(result.value.length).toBeGreaterThan(0)
-        for (const item of result.value) {
+        const foundFiles = await expectResult(
+            parent.findFiles({ exts: [validExt] }),
+        )
+        expect(foundFiles.length).toBeGreaterThan(0)
+        for (const item of foundFiles) {
             assert(item.ext() === validExt)
         }
     })
 
     test("empty results", async () => {
         const parent = folder("src")
-        const result = await parent.findFiles({ glob: "zebra" })
-        assert(result.isOk())
-        expect(result.value.length).toEqual(0)
+        const foundFiles = await expectResult(
+            parent.findFiles({ glob: "zebra" }),
+        )
+        expect(foundFiles.length).toEqual(0)
     })
 })

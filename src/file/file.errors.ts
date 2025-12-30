@@ -1,4 +1,6 @@
 export type FileOperation =
+    | "append"
+    | "chmod"
     | "copy"
     | "link"
     | "move"
@@ -30,6 +32,12 @@ export class FileStatError extends FileError {
     }
 }
 
+export class FileChmodError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("chmod", path, cause)
+    }
+}
+
 export class FileReadError extends FileError {
     constructor(path: string, cause?: unknown) {
         super("read", path, cause)
@@ -39,6 +47,12 @@ export class FileReadError extends FileError {
 export class FileWriteError extends FileError {
     constructor(path: string, cause?: unknown) {
         super("write", path, cause)
+    }
+}
+
+export class FileAppendError extends FileError {
+    constructor(path: string, cause?: unknown) {
+        super("append", path, cause)
     }
 }
 

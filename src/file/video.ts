@@ -21,16 +21,13 @@ export const VIDEO_EXTENSIONS = [
 
 export function getVideoMetaData(path: string) {
     return fcmd("ffprobe")
+        .opt("hide_banner")
+        .opt("show_format")
+        .opt("show_streams")
         .opt({
             v: "error",
             // biome-ignore lint/style/useNamingConvention: option is snake case
-            hide_banner: "",
-            // biome-ignore lint/style/useNamingConvention: option is snake case
             print_format: "json",
-            // biome-ignore lint/style/useNamingConvention: option is snake case
-            show_format: "",
-            // biome-ignore lint/style/useNamingConvention: option is snake case
-            show_streams: "",
         })
         .args(path)
         .read()
