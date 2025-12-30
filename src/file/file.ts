@@ -29,6 +29,10 @@ import {
     FileAppendError,
     FileChmodError,
     FileCopyError,
+    FileImageConvertError,
+    FileImageMetadataError,
+    FileImagePhashError,
+    FileImageResizeError,
     FileLinkError,
     FileMoveError,
     FileReadError,
@@ -36,10 +40,6 @@ import {
     FileStatError,
     FileSymLinkError,
     FileWriteError,
-    ImageConvertError,
-    ImageMetadataError,
-    ImagePhashError,
-    ImageResizeError,
 } from "$/file/file.errors"
 import type { ImageResizeOptions, ToAVIFOptions } from "$/file/image"
 import { phashStringSchema } from "$/file/image"
@@ -347,7 +347,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
 
         const metadata = ResultAsync.fromThrowable(
             () => sharpInstance.metadata(),
-            (someError) => new ImageMetadataError(this.#path, someError),
+            (someError) => new FileImageMetadataError(this.#path, someError),
         )
 
         const resize = ResultAsync.fromThrowable(
@@ -358,7 +358,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
                     .toFile(targetFile.path())
                 return targetFile
             },
-            (someError) => new ImageResizeError(this.#path, someError),
+            (someError) => new FileImageResizeError(this.#path, someError),
         )
 
         const toAVIF = ResultAsync.fromThrowable(
@@ -373,7 +373,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
                     .toFile(targetFile.path())
                 return targetFile
             },
-            (someError) => new ImageConvertError(this.#path, someError),
+            (someError) => new FileImageConvertError(this.#path, someError),
         )
 
         const phash = ResultAsync.fromThrowable(
@@ -381,7 +381,7 @@ export class FluentFile<Content = string, ParsedContent = Content> {
                 const phashResponse = await sharpPhash(this.#path, sharpOptions)
                 return phashStringSchema.decode(phashResponse)
             },
-            (someError) => new ImagePhashError(this.#path, someError),
+            (someError) => new FileImagePhashError(this.#path, someError),
         )
 
         return {
