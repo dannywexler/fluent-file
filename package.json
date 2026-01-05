@@ -1,6 +1,6 @@
 {
   "name": "fluent-file",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A fluent TypeScript library for working with files and folders",
   "keywords": [
     "files",

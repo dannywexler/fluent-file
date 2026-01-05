@@ -1,11 +1,15 @@
-import { constants, createReadStream, createWriteStream } from "node:fs"
+import {
+    appendFile,
+    constants,
+    createReadStream,
+    createWriteStream,
+} from "node:fs"
 import { chmod, copyFile, readFile, stat } from "node:fs/promises"
 import { homedir } from "node:os"
 import { inspect } from "node:util"
 
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import { fcmd } from "fluent-command"
-import { appendFile } from "fs-extra"
 import type { WriteFileOptions } from "fs-extra/esm"
 import {
     ensureFile,
