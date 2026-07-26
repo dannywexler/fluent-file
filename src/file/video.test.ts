@@ -3,31 +3,30 @@ import { describe, expect, test } from "vitest"
 import { expectResult } from "$/common/testing"
 import { folder } from "$/folder/folder"
 
-const bunnyUrl =
-    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+const corgiUrl = "https://lorem.video/corgi_1080p"
 const videosFolder = folder("tests", "video")
-const filename = "bunny.mp4"
-const bunnyFile = videosFolder.file(filename)
-const bunnyMetaData = {
+const filename = "corgi.mp4"
+const corgiFile = videosFolder.file(filename)
+const corgiMetaData = {
     // biome-ignore lint/style/useNamingConvention: is snake case in actual object
-    bit_rate: 2_119_231,
+    bit_rate: 3_763_022,
     hours: 0,
-    millis: 596_474,
-    minutes: 9,
-    seconds: 56,
-    size: 158_008_374,
-    videoStream: { height: 720, width: 1280 },
+    millis: 20_067,
+    minutes: 0,
+    seconds: 20,
+    size: 9_438_915,
+    videoStream: { height: 1080, width: 1920 },
 }
 
 test("exists", async () => {
-    await bunnyFile.folder().ensureExists()
-    if (await bunnyFile.exists()) {
+    await corgiFile.folder().ensureExists()
+    if (await corgiFile.exists()) {
         expect(true).toEqual(true)
         // console.log(filename, "already exists => skipping download")
     } else {
         // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
         console.log(filename, "does not exist => downloading")
-        const dlResult = await expectResult(bunnyFile.download(bunnyUrl))
+        const dlResult = await expectResult(corgiFile.download(corgiUrl))
         expect(dlResult).toEqual("SUCCESS")
         // biome-ignore lint/suspicious/noConsole: want to know if downloaded successfully
         console.log(filename, "downloaded")
@@ -36,20 +35,22 @@ test("exists", async () => {
 
 describe("metadata", () => {
     test("Got valid metadata", async () => {
-        const foundMetadata = await expectResult(bunnyFile.video().metadata())
-        expect(foundMetadata).toMatchObject(bunnyMetaData)
+        const foundMetadata = await expectResult(corgiFile.video().metadata())
+        expect(foundMetadata).toMatchObject(corgiMetaData)
     })
 })
 
 describe("thumbnail", async () => {
-    const thumbnailFile = videosFolder.file("bunny.png")
-    await thumbnailFile.remove()
+    await videosFolder.file("corgi.jpg").remove()
 
     test("created thumbnail", async () => {
-        const bunnyThumb = await expectResult(
-            bunnyFile.video().extractFrame({ time: 30 }),
+        const corgiThumb = await expectResult(
+            corgiFile.video().extractFrame({
+                time: Math.round(corgiMetaData.seconds / 2),
+                ext: "jpg",
+            }),
         )
-        const destinationFileExists = await bunnyThumb.exists()
+        const destinationFileExists = await corgiThumb.exists()
         expect(destinationFileExists).toBe(true)
     })
 })

@@ -46,8 +46,6 @@ const commonStreamSchema = z.object({
     codec_long_name: z.string(),
     // biome-ignore lint/style/useNamingConvention: is snake case in actual object
     codec_tag_string: z.string(),
-    // biome-ignore lint/style/useNamingConvention: is snake case in actual object
-    nb_frames: posIntSchema,
 })
 
 export const audioStreamSchema = z.object({
